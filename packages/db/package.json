@@ -15,8 +15,7 @@
     "migrate:deploy": "prisma migrate deploy",
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit",
-    "build": "tsc -p tsconfig.json"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

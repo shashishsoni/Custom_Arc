@@ -14,8 +14,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit",
-    "build": "tsc -p tsconfig.json"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "zod": "^4.4.3"

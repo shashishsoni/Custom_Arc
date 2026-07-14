@@ -9,21 +9,23 @@
   },
   "scripts": {
     "install:all": "pnpm install",
-    "build": "pnpm -r build",
-    "dev": "pnpm -r --parallel dev",
-    "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint",
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "start": "turbo start",
+    "typecheck": "turbo typecheck",
+    "lint": "turbo lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:migrate": "pnpm --filter @customarc/db migrate:dev",
-    "db:generate": "pnpm --filter @customarc/db generate",
-    "api": "pnpm --filter @customarc/api dev",
-    "web": "pnpm --filter @customarc/web dev"
+    "db:generate": "turbo generate",
+    "api": "turbo dev --filter=@customarc/api",
+    "web": "turbo dev --filter=@customarc/web"
   },
   "devDependencies": {
     "prettier": "^3.9.5",
+    "turbo": "^2.10.5",
     "typescript": "^6.0.3"
   }
 }
