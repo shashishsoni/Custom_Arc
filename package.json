@@ -1,0 +1,29 @@
+{
+  "name": "customarc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CustomArc — Phase 1 buildable monorepo. See docs/phase-1/spec.md.",
+  "packageManager": "pnpm@11.13.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "install:all": "pnpm install",
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @customarc/db migrate:dev",
+    "db:generate": "pnpm --filter @customarc/db generate",
+    "api": "pnpm --filter @customarc/api dev",
+    "web": "pnpm --filter @customarc/web dev"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.5",
+    "typescript": "^6.0.3"
+  }
+}

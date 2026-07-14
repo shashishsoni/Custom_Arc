@@ -1,0 +1,22 @@
+{
+  "name": "@customarc/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "build": "bun build src/index.ts --target bun --outdir dist"
+  },
+  "dependencies": {
+    "@customarc/db": "workspace:*",
+    "@customarc/shared": "workspace:*",
+    "elysia": "^1.4.29"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^6.0.3"
+  }
+}

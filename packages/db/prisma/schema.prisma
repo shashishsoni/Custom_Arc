@@ -1,0 +1,352 @@
+// CustomArc — Phase 1 schema (spec §4).
+// Postgres via Prisma. cuid ids, snake_case tables (@@map), indexed foreign keys,
+// append-only credit ledger with derived balance. Design documents stored as JSONB.
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  // Prisma v7: connection URL lives in prisma.config.ts, not the schema.
+  provider = "postgresql"
+}
+
+// ───────────────────────── Auth (better-auth core tables) ─────────────────────────
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String?
+  image        String?
+  emailVerified DateTime?
+  sessions     Session[]
+  accounts     Account[]
+  verifications Verification[]
+  designs      Design[]
+  generations  Generation[]
+  uploads      Upload[]
+  orders       Order[]
+  creditLedger CreditLedger[]
+  bulkLeads    BulkLead[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope             String?
+  password          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// ───────────────────────── Catalog ─────────────────────────
+
+enum BlankCategory {
+  mug
+  phone_case
+}
+
+model Blank {
+  id         String        @id @default(cuid())
+  slug       String        @unique
+  name       String
+  category   BlankCategory
+  template   Json          // BlankTemplateSpec (packages/shared) — printable area, print pixels, UV, asset urls
+  isActive   Boolean       @default(true)
+  variants   BlankVariant[]
+  designs    Design[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@map("blanks")
+}
+
+model BlankVariant {
+  id          String      @id @default(cuid())
+  blankId     String
+  blank       Blank       @relation(fields: [blankId], references: [id], onDelete: Cascade)
+  name        String      // e.g. "11oz", "iphone-15"
+  partnerSku  String
+  priceMinor  Int
+  currency    String      @default("INR")
+  isActive    Boolean     @default(true)
+  orderItems  OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([blankId])
+  @@map("blank_variants")
+}
+
+// ───────────────────────── Designer ─────────────────────────
+
+model Design {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blankId     String
+  blank       Blank        @relation(fields: [blankId], references: [id], onDelete: Restrict)
+  document    Json         // DesignDocument (packages/shared) — layers in template-mm coords
+  name        String?
+  generations Generation[]
+  orderItems  OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([blankId])
+  @@map("designs")
+}
+
+enum GenerationStatus {
+  pending
+  moderating
+  generating
+  completed
+  failed
+  rejected
+}
+
+model Generation {
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  designId       String
+  design         Design           @relation(fields: [designId], references: [id], onDelete: Cascade)
+  prompt         String
+  outputAssetKey String?
+  creditsCost    Int
+  provider       String
+  status         GenerationStatus @default(pending)
+  moderation     ModerationFlag?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([designId])
+  @@index([status])
+  @@map("generations")
+}
+
+// ───────────────────────── Credits (append-only ledger) ─────────────────────────
+
+enum CreditEntryType {
+  grant
+  spend
+  purchase
+}
+
+model CreditLedger {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          CreditEntryType
+  amount        Int             // +grant/+purchase, -spend
+  correlationId String          // idempotency: a repeated spend debits once
+  reason        String
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, correlationId])
+  @@index([userId, createdAt])
+  @@map("credit_ledger")
+}
+
+// ───────────────────────── Uploads + moderation ─────────────────────────
+
+enum UploadStatus {
+  uploaded
+  reencoded
+  flagged
+  approved
+}
+
+model Upload {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storageKey  String       // private bucket path; served via signed URL (spec §7.4)
+  mimeType    String
+  sizeBytes   Int
+  widthPx     Int?
+  heightPx    Int?
+  status      UploadStatus @default(uploaded)
+  moderation  ModerationFlag?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("uploads")
+}
+
+enum ModerationVerdict {
+  pending
+  approved
+  flagged
+  blocked
+}
+
+enum ModerationSubjectType {
+  prompt
+  upload
+  generation_output
+}
+
+model ModerationFlag {
+  id             String               @id @default(cuid())
+  subjectType    ModerationSubjectType
+  // Exactly one of the optional refs below is set, matching subjectType.
+  generationId   String?              @unique
+  generation     Generation?          @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  uploadId       String?              @unique
+  upload         Upload?              @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  prompt         String?
+  verdict        ModerationVerdict    @default(pending)
+  reasons        String[]
+  reviewedById   String?
+  reviewedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([verdict])
+  @@index([subjectType])
+  @@map("moderation_flags")
+}
+
+// ───────────────────────── Orders + fulfillment ─────────────────────────
+
+enum OrderState {
+  designing
+  paid
+  in_production
+  shipped
+  delivered
+  cancelled
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  state         OrderState  @default(designing)
+  totalMinor    Int
+  currency      String      @default("INR")
+  partner       String?
+  partnerOrderId String?
+  items         OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([state])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String     @id @default(cuid())
+  orderId        String
+  order          Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  designId       String
+  design         Design     @relation(fields: [designId], references: [id], onDelete: Restrict)
+  blankVariantId String
+  blankVariant   BlankVariant @relation(fields: [blankVariantId], references: [id], onDelete: Restrict)
+  unitPriceMinor Int
+  printFile      PrintFile?
+
+  @@index([orderId])
+  @@index([designId])
+  @@map("order_items")
+}
+
+model PrintFile {
+  id             String   @id @default(cuid())
+  orderItemId    String   @unique
+  orderItem      OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  storageKey     String
+  widthPx        Int
+  heightPx       Int
+  dpi            Int      @default(300)
+  format         String   @default("png")
+  validated      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderItemId])
+  @@map("print_files")
+}
+
+// ───────────────────────── B2B stub ─────────────────────────
+
+model BulkLead {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String
+  note      String
+  handledAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("bulk_leads")
+}

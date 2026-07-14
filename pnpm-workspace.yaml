@@ -1,0 +1,14 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  '@prisma/engines': true
+  prisma: true
+  sharp: true
+  unrs-resolver: true
+
+# Patch known advisories in transitive deps until upstreams ship them.
+overrides:
+  '@hono/node-server': ^1.19.13
+  postcss: ^8.5.10
