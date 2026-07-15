@@ -1,38 +1,19 @@
 import Link from 'next/link'
 import { listBlanks } from '@/lib/api'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { HomeHero } from '@/components/home-hero'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
 
 export default async function HomePage() {
   const blanks = await listBlanks().catch(() => [])
 
   return (
     <main id="main" className="pb-12">
-      <section className="max-w-2xl py-12 md:py-16" aria-labelledby="hero-title">
-        <p className="mb-3 text-xs font-semibold tracking-[0.16em] text-primary uppercase">
-          CustomArc
-        </p>
-        <h1
-          id="hero-title"
-          className="mb-4 text-4xl font-semibold tracking-tight text-fg md:text-5xl"
-        >
-          the arc of customization
-        </h1>
-        <p className="mb-8 text-lg text-fg-muted">
-          Design mugs and phone cases in 3D — AI text to texture, print-partner fulfilled.
-        </p>
-        <Link
-          href="/catalog"
-          className={cn(buttonVariants({ size: 'lg' }), 'min-h-11 px-6')}
-        >
-          Start customizing
-        </Link>
-      </section>
+      <HomeHero />
 
-      <section className="py-6">
+      <section className="py-10 md:py-14">
         <div className="grid gap-4 sm:grid-cols-2">
           {blanks.length === 0 ? (
             <p className="text-fg-muted">
