@@ -1,6 +1,10 @@
+import { createElement } from 'react'
 import { Resend } from 'resend'
+import { render } from 'react-email'
 import { EMAIL_FROM, IS_PRODUCTION, RESEND_API_KEY } from '../../env.ts'
 import { logger } from '../../logger.ts'
+import { MagicLinkEmail, magicLinkText } from './emails/magic-link.tsx'
+import { OtpEmail, otpText } from './emails/otp.tsx'
 
 const resend = new Resend(RESEND_API_KEY)
 
@@ -57,13 +61,12 @@ export async function sendMagicLinkEmail(args: {
   to: string
   url: string
 }): Promise<void> {
-  const subject = 'Sign in to CustomArc'
-  const text = `Sign in to CustomArc:\n${args.url}\n\nThis link expires soon. If you did not request it, ignore this email.`
-  const html = `<p>Click to sign in:</p><p><a href="${args.url}">Sign in to CustomArc</a></p><p>Or open: ${args.url}</p><p>Expires soon. If you did not request this, ignore it.</p>`
+  const html = await render(createElement(MagicLinkEmail, { url: args.url }))
+  const text = magicLinkText(args.url)
 
   await sendAuthEmail({
     to: args.to,
-    subject,
+    subject: 'Sign in to CustomArc',
     html,
     text,
     idempotencyKey: `auth-magic-link/${args.to}/${Date.now()}`,
@@ -80,13 +83,12 @@ export async function sendOtpEmail(args: {
   otp: string
   type: string
 }): Promise<void> {
-  const subject = 'Your CustomArc sign-in OTP'
-  const text = `Your CustomArc sign-in OTP is ${args.otp}. It expires soon. If you did not request this, ignore this email.`
-  const html = `<p>Your sign-in OTP:</p><p style="font-size:24px;letter-spacing:4px;font-weight:700">${args.otp}</p><p>Expires soon. If you did not request this, ignore it.</p>`
+  const html = await render(createElement(OtpEmail, { otp: args.otp }))
+  const text = otpText(args.otp)
 
   await sendAuthEmail({
     to: args.to,
-    subject,
+    subject: 'Your CustomArc sign-in code',
     html,
     text,
     idempotencyKey: `auth-otp/${args.type}/${args.to}/${args.otp}`,
