@@ -15,20 +15,20 @@ datasource db {
 // ───────────────────────── Auth (better-auth core tables) ─────────────────────────
 
 model User {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  name         String?
-  image        String?
-  emailVerified DateTime?
-  sessions     Session[]
-  accounts     Account[]
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String         @default("")
+  image         String?
+  emailVerified Boolean        @default(false)
+  sessions      Session[]
+  accounts      Account[]
   verifications Verification[]
-  designs      Design[]
-  generations  Generation[]
-  uploads      Upload[]
-  orders       Order[]
-  creditLedger CreditLedger[]
-  bulkLeads    BulkLead[]
+  designs       Design[]
+  generations   Generation[]
+  uploads       Upload[]
+  orders        Order[]
+  creditLedger  CreditLedger[]
+  bulkLeads     BulkLead[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -66,6 +66,7 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope             String?
+  // better-auth account column; unused — auth is passwordless (magic link + OAuth)
   password          String?
 
   createdAt DateTime @default(now())

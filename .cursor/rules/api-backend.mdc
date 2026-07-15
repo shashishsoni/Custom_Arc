@@ -1,0 +1,74 @@
+---
+description: CustomArc API backend guide — layered architecture, passwordless auth, DRY/KISS
+globs: apps/api/**/*,packages/db/**/*
+alwaysApply: false
+---
+
+# CustomArc API — Agent Guide
+
+> Read before any change under `apps/api/` or `packages/db/`. Spec: `docs/phase-1/spec.md`.
+
+## Stack
+
+Bun · Elysia · Prisma (`@customarc/db`) · Zod (`@customarc/shared`) · better-auth
+
+## Package Manager
+
+`pnpm` · run API: `pnpm api` · typecheck: `pnpm --filter @customarc/api typecheck`
+
+## Architecture (mandatory)
+
+```
+routes → service → repo → prisma
+```
+
+- Routes: HTTP only (parse, call service, map `ok`/`err`). No Prisma.
+- Services: business rules. Framework-agnostic. No request/response objects.
+- Repos: persistence only. No business rules.
+- Errors: throw `ApiError` helpers from `src/errors.ts`. App maps them once in `app.ts`.
+
+## Auth (settled)
+
+- **Passwordless only:** magic link **and** email OTP + optional Google OAuth.
+- **No passwords.** Do not enable `emailAndPassword`. Do not add password routes/UI.
+- Library: better-auth (`src/modules/auth/`). No hand-rolled sessions/JWT.
+- Guard: `.use(withAuth)` → `user` / `session` on context.
+- Never trust `x-user-id` or client-sent user ids.
+- New users → `creditsService.grantFreeAllocation` via better-auth `databaseHooks`.
+- Endpoints: magic link `POST /api/auth/sign-in/magic-link`; OTP send `POST /api/auth/email-otp/send-verification-otp` + sign-in `POST /api/auth/sign-in/email-otp`.
+
+## Practices
+
+- **DRY** — shared helpers once; no copy-paste `requireUser`.
+- **KISS / YAGNI** — shortest correct path; no speculative abstractions.
+- **Decouple** — modules import services, not each other's repos/Prisma.
+- **Fail fast** — required env as named consts in `src/env.ts` (`RESEND_API_KEY`, `AUTH_SECRET`, …); validate bodies with Elysia `t` / shared Zod.
+- **Idempotent writes** where money/credits matter (`correlationId`).
+- Short files, clear names, no drive-by refactors outside the task.
+
+## Module layout
+
+```
+src/modules/<name>/
+  routes.ts   # Elysia adapter
+  service.ts  # domain
+  repo.ts     # optional Prisma
+```
+
+Auth special files: `instance.ts` (better-auth), `plugin.ts` (`authPlugin` mount + `withAuth` guard), `mail.ts` (magic-link + OTP delivery).
+
+Protected routes: `.use(withAuth)` then read `user` / `session` from context.
+
+## Schema
+
+- Source of truth: `packages/db/prisma/schema.prisma`
+- Auth tables already map better-auth core (`users` / `sessions` / `accounts` / `verifications`).
+- Migrations via Prisma only — never edit production DB by hand.
+
+## Anti-patterns
+
+- Business logic in routes
+- Hand-rolled auth / password login
+- Skipping the service layer for “just one query”
+- Swallowing errors or returning inconsistent envelopes
+- Secrets in code (use `.env`; update `.env.example`)

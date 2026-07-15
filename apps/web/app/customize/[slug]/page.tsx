@@ -14,9 +14,9 @@ export default async function CustomizePage({ params }: { params: Promise<{ slug
   }
 
   return (
-    <main className="section">
-      <h2>{blank.name}</h2>
-      <p className="muted">
+    <main id="main" className="py-10 pb-16">
+      <h2 className="mb-2 text-3xl font-semibold tracking-tight text-fg">{blank.name}</h2>
+      <p className="mb-8 text-fg-muted">
         Printable area {blank.template.printableAreaMm.widthMm}×
         {blank.template.printableAreaMm.heightMm}mm ·{' '}
         {blank.template.printPixels.widthPx}×{blank.template.printPixels.heightPx}px @300 DPI

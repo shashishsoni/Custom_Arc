@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { ok } from '@customarc/shared'
-import { unauthorized } from '../../errors.ts'
+import { withAuth } from '../auth/plugin.ts'
 import { creditsService } from './service.ts'
 
 /**
@@ -9,17 +9,11 @@ import { creditsService } from './service.ts'
  * account page and for manual/integration testing.
  */
 export const creditsRoutes = new Elysia({ prefix: '/credits' })
-  .get('/balance', async ({ headers }) => {
-    const userId = requireUser(headers)
-    return ok(await creditsService.getBalance(userId))
-  })
+  .use(withAuth)
+  .get('/balance', async ({ user }) => ok(await creditsService.getBalance(user.id)))
   .post(
     '/spend',
-    async ({ body, headers }) => {
-      const userId = requireUser(headers)
-      const result = await creditsService.spend({ userId, ...body })
-      return ok(result)
-    },
+    async ({ body, user }) => ok(await creditsService.spend({ userId: user.id, ...body })),
     {
       body: t.Object({
         correlationId: t.String(),
@@ -28,9 +22,3 @@ export const creditsRoutes = new Elysia({ prefix: '/credits' })
       }),
     },
   )
-
-function requireUser(headers: Record<string, string | undefined>): string {
-  const userId = headers['x-user-id']
-  if (!userId) throw unauthorized()
-  return userId
-}

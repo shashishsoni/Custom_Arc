@@ -46,20 +46,15 @@ export function CustomizerStub({ slug }: { slug: string }) {
   }, [slug])
 
   return (
-    <div style={{ marginTop: 24 }}>
+    <div className="mt-6">
       <canvas
         ref={canvasRef}
-        style={{
-          width: '100%',
-          maxWidth: 800,
-          borderRadius: 12,
-          border: '1px solid var(--border)',
-          background: 'var(--bg-card)',
-        }}
+        className="w-full max-w-[800px] rounded-xl border border-border bg-bg-card"
       />
-      <p className="muted" style={{ marginTop: 12 }}>
-        2D preview via the shared <code>@customarc/design</code> render — the same function the
-        server uses for the print file. The 3D r3f customizer mounts here in issue 07.
+      <p className="mt-3 text-sm text-fg-muted">
+        2D preview via the shared <code className="text-fg">@customarc/design</code> render — the
+        same function the server uses for the print file. The 3D r3f customizer mounts here in
+        issue 07.
       </p>
     </div>
   )

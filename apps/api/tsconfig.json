@@ -5,6 +5,7 @@
     "types": ["bun"],
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
     "rootDir": "src"
   },
   "include": ["src"]

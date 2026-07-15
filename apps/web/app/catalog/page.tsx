@@ -1,4 +1,7 @@
+import Link from 'next/link'
 import { listBlanks } from '@/lib/api'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 export const metadata = { title: 'Catalog — CustomArc' }
 
@@ -6,19 +9,27 @@ export default async function CatalogPage() {
   const blanks = await listBlanks().catch(() => [])
 
   return (
-    <main className="section">
-      <h2>Catalog</h2>
-      <p className="muted">Two blanks, one perfected pipeline.</p>
-      <div className="grid" style={{ marginTop: 24 }}>
+    <main id="main" className="py-10 pb-16">
+      <h2 className="mb-2 text-3xl font-semibold tracking-tight text-fg">Catalog</h2>
+      <p className="mb-8 text-fg-muted">Two blanks, one perfected pipeline.</p>
+      <div className="grid gap-4 sm:grid-cols-2">
         {blanks.length === 0 ? (
-          <p className="muted">No blanks loaded. Is the API running?</p>
+          <p className="text-fg-muted">No blanks loaded. Is the API running?</p>
         ) : (
           blanks.map((b) => (
-            <a key={b.slug} className="card" href={`/customize/${b.slug}`}>
-              <span className="tag">{b.category}</span>
-              <h3>{b.name}</h3>
-              <p>Customize →</p>
-            </a>
+            <Link key={b.slug} href={`/customize/${b.slug}`} className="group block">
+              <Card className="h-full border-border transition-colors group-hover:border-primary">
+                <CardHeader className="gap-3">
+                  <Badge variant="secondary" className="w-fit capitalize">
+                    {b.category.replace('_', ' ')}
+                  </Badge>
+                  <CardTitle className="text-xl text-fg">{b.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-fg-muted">Customize →</p>
+                </CardContent>
+              </Card>
+            </Link>
           ))
         )}
       </div>
