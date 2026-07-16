@@ -1,5 +1,4 @@
-import { createArcWrapTexture } from './arc-wrap-texture'
-import { createProductSet } from './products'
+import { loadMug } from './products'
 import {
   addContactGround,
   addStudioLighting,
@@ -17,7 +16,15 @@ export type HeroSceneHandle = {
   dispose: () => void
 }
 
-export function mountHeroScene(host: HTMLElement): HeroSceneHandle {
+type HeroSceneOptions = {
+  onReady?: () => void
+  onError?: () => void
+}
+
+export function mountHeroScene(
+  host: HTMLElement,
+  { onReady, onError }: HeroSceneOptions = {},
+): HeroSceneHandle {
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const scene = createScene()
@@ -27,9 +34,21 @@ export function mountHeroScene(host: HTMLElement): HeroSceneHandle {
   addStudioLighting(scene)
   addContactGround(scene)
 
-  const wrap = createArcWrapTexture()
-  const products = createProductSet(wrap)
-  scene.add(products)
+  let disposed = false
+  let mug: Awaited<ReturnType<typeof loadMug>> | null = null
+  void loadMug()
+    .then((model) => {
+      if (disposed) {
+        disposeObject3D(model)
+        return
+      }
+      mug = model
+      scene.add(model)
+      onReady?.()
+    })
+    .catch(() => {
+      if (!disposed) onError?.()
+    })
 
   const { controls, disposeIdle } = createOrbit(camera, renderer.domElement, reduceMotion)
 
@@ -42,17 +61,17 @@ export function mountHeroScene(host: HTMLElement): HeroSceneHandle {
   const tick = () => {
     frame = requestAnimationFrame(tick)
     controls.update()
-    if (!reduceMotion) products.rotation.y += 0.0012
+    if (!reduceMotion && mug) mug.rotation.y += 0.0012
     renderer.render(scene, camera)
   }
   tick()
 
   return {
     dispose() {
+      disposed = true
       cancelAnimationFrame(frame)
       observer.disconnect()
       disposeIdle()
-      wrap.dispose()
       pmrem.dispose()
       disposeObject3D(scene)
       renderer.dispose()

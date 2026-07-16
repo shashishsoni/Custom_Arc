@@ -21,6 +21,8 @@
   --accent: #c45c6a;
   --accent-fg: #ffffff;
   --accent-2: #4a5568;
+  --scene-bg: #efded8;
+  --scene-highlight: #ffffff;
   --radius: 0.25rem;
   --radius-pill: 999px;
   --maxw: 1180px;
@@ -68,7 +70,7 @@
 
 @theme inline {
   --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-playfair), ui-serif, Georgia, serif;
 
   --color-bg: var(--bg);
   --color-bg-elev: var(--bg-elev);
@@ -79,6 +81,8 @@
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --color-accent-2: var(--accent-2);
+  --color-scene-bg: var(--scene-bg);
+  --color-scene-highlight: var(--scene-highlight);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

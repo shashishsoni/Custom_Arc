@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   ChevronDown,
@@ -195,25 +196,17 @@ export function SiteHeader({ credits = 12, cartCount = 2 }: SiteHeaderProps) {
           >
             <span
               aria-hidden
-              className={cn(
-                'grid size-[34px] shrink-0 place-items-center rounded-[var(--radius)] border md:size-[38px]',
-                'border-[color-mix(in_srgb,var(--accent)_30%,var(--border))] bg-[color-mix(in_srgb,var(--accent)_12%,#ffffff)]',
-              )}
+              className="relative size-[34px] shrink-0 md:size-[38px]"
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="size-[18px] text-primary md:size-[22px]"
-              >
-                <path d="M4 16c4-8 12-8 16 0" />
-                <circle cx="12" cy="8" r="2.25" fill="currentColor" stroke="none" />
-              </svg>
+              <Image
+                src="/ca-logo.png"
+                alt=""
+                width={80}
+                height={80}
+                className="absolute top-[calc(50%+6px)] left-1/2 size-[72px] max-w-none -translate-x-1/2 -translate-y-1/2 object-contain md:size-20"
+              />
             </span>
-            <span className="text-[1.2rem] leading-none font-extrabold tracking-[0.02em] text-foreground md:text-[clamp(1.35rem,2.1vw,1.7rem)]">
+            <span className="font-heading text-[1.2rem] leading-none font-bold tracking-tight text-foreground md:text-[clamp(1.35rem,2.1vw,1.7rem)]">
               CustomArc
             </span>
           </Link>

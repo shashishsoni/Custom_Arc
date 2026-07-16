@@ -7,8 +7,9 @@ const MAX_DPR = 2
 const IDLE_RESUME_MS = 2800
 
 export function createRenderer(host: HTMLElement): THREE.WebGLRenderer {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_DPR))
+  renderer.setClearColor(0x000000, 0)
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.05
@@ -25,10 +26,8 @@ export function createCamera(): THREE.PerspectiveCamera {
 }
 
 export function createScene(): THREE.Scene {
-  const bg = cssVar('--bg')
   const scene = new THREE.Scene()
-  scene.background = new THREE.Color(bg)
-  scene.fog = new THREE.Fog(bg, 8, 16)
+  scene.fog = new THREE.Fog(cssVar('--scene-bg'), 8, 16)
   return scene
 }
 

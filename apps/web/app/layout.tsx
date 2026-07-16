@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Outfit } from 'next/font/google'
+import { Outfit, Playfair_Display } from 'next/font/google'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
 import { Toaster } from '@/components/ui/sonner'
@@ -12,6 +12,12 @@ const outfit = Outfit({
   display: 'swap',
 })
 
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: 'CustomArc — customize it, we print it',
   description:
@@ -20,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cn(outfit.variable, 'font-sans')}>
+    <html lang="en" className={cn(outfit.variable, playfair.variable, 'font-sans')}>
       <body>
         <Link
           href="#main"

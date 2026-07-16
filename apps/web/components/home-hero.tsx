@@ -13,34 +13,29 @@ const HeroProductsScene = dynamic(
 export function HomeHero() {
   return (
     <section
-      className="relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden"
+      className="relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden bg-bg"
       aria-labelledby="hero-title"
     >
-      <HeroProductsScene />
-
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-bg/10" aria-hidden />
-
-      <div className="relative z-[2] mx-auto flex min-h-[calc(100dvh-var(--header-h))] w-full max-w-content items-center px-4 py-12 md:px-6 md:py-20">
-        <div className="pointer-events-auto w-full max-w-xl rounded border border-border bg-bg-elev/90 p-8 shadow-[0_8px_32px_rgba(196,92,106,0.08)] backdrop-blur-xl md:p-12">
-          <p className="mb-4 text-xs font-semibold tracking-[0.16em] text-primary uppercase">
+      <div className="mx-auto flex min-h-[calc(100dvh-var(--header-h))] w-full max-w-content flex-col items-center px-4 pt-12 md:px-6 md:pt-16">
+        <div className="relative z-10 flex w-full max-w-2xl flex-col items-center text-center">
+          <p className="mb-3 font-heading text-2xl font-bold tracking-tight text-primary md:text-3xl">
             CustomArc
           </p>
           <h1
             id="hero-title"
-            className="mb-5 text-3xl font-extrabold tracking-tight text-fg uppercase md:text-5xl md:leading-[1.15]"
+            className="mb-5 font-heading text-4xl leading-tight font-semibold tracking-tight text-fg md:text-5xl"
           >
-            Your canvas, our craft.
+            Artistry in Every Arc
           </h1>
-          <p className="mb-8 max-w-md text-base text-fg-muted md:text-lg">
-            Redefine everyday objects in our AI-powered 3D studio — mugs and phone cases, wrap to
-            print.
+          <p className="mb-8 max-w-lg text-base leading-relaxed text-fg-muted md:text-lg">
+            Experience the next generation of bespoke 3D creation.
           </p>
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
             <Link
               href="/catalog"
               className={cn(
                 buttonVariants({ size: 'lg' }),
-                'min-h-11 w-full rounded px-8 sm:w-auto',
+                'min-h-11 w-full rounded px-8 tracking-wide sm:w-auto',
               )}
             >
               Start customizing
@@ -49,13 +44,27 @@ export function HomeHero() {
               href="/catalog"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'lg' }),
-                'min-h-11 w-full rounded border-border bg-bg-card/70 px-8 text-fg backdrop-blur-md sm:w-auto',
+                'min-h-11 w-full rounded border-border bg-transparent px-8 tracking-wide text-primary hover:border-primary sm:w-auto',
               )}
             >
               Browse catalog
             </Link>
           </div>
-          <p className="mt-6 text-xs tracking-wide text-fg-muted">Drag to explore · 3D live</p>
+        </div>
+
+        <div className="relative mt-6 h-[42vh] min-h-80 w-full max-w-4xl flex-1 md:mt-8 md:h-[58vh] md:min-h-[28rem]">
+          <div
+            aria-hidden="true"
+            className="absolute inset-y-0 right-[calc(100%+1.5rem)] w-full origin-center rotate-6 border border-border bg-card"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-y-0 left-[calc(100%+1.5rem)] w-full origin-center -rotate-6 border border-border bg-card"
+          />
+          <HeroProductsScene />
+          <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 text-xs tracking-wide text-fg-muted">
+            Drag to explore · 3D live
+          </p>
         </div>
       </div>
     </section>
