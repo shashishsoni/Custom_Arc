@@ -5,7 +5,8 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { config } from 'dotenv'
 
-// Turbo/bun cwd is apps/api — load workspace-root .env (fallback: .env.example).
+// Turbo/bun cwd is apps/api — load workspace-root `.env`
+// (sections: ---- shared ---- / ---- backend ---- / ---- frontend ----).
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..')
 const envFile = ['.env', '.env.example']
   .map((name) => resolve(root, name))

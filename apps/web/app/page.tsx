@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { listBlanks } from '@/lib/api'
 import { HomeHero } from '@/components/home-hero'
+import { HowItWorksScroll } from '@/components/how-it-works-scroll'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +13,7 @@ export default async function HomePage() {
   return (
     <main id="main" className="pb-12">
       <HomeHero />
+      <HowItWorksScroll />
 
       <section className="py-10 md:py-14">
         <div className="grid gap-4 sm:grid-cols-2">

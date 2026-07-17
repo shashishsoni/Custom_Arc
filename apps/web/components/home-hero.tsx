@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { buttonVariants } from '@/components/ui/button'
+import { tryR2MediaUrl } from '@/lib/r2'
 import { cn } from '@/lib/utils'
 
 const HeroProductsScene = dynamic(
@@ -10,7 +11,39 @@ const HeroProductsScene = dynamic(
   { ssr: false },
 )
 
+function HeroSideCard({
+  className,
+  videoSrc,
+}: {
+  className?: string
+  videoSrc: string | null
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        'absolute inset-y-0 w-full origin-center overflow-hidden border border-border bg-card',
+        className,
+      )}
+    >
+      {videoSrc ? (
+        <video
+          src={videoSrc}
+          className="size-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+      ) : null}
+    </div>
+  )
+}
+
 export function HomeHero() {
+  const promoVideoSrc = tryR2MediaUrl('premiumProVideo')
+
   return (
     <section
       className="relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden bg-bg"
@@ -53,13 +86,13 @@ export function HomeHero() {
         </div>
 
         <div className="relative mt-6 h-[42vh] min-h-80 w-full max-w-4xl flex-1 md:mt-8 md:h-[58vh] md:min-h-[28rem]">
-          <div
-            aria-hidden="true"
-            className="absolute inset-y-0 right-[calc(100%+1.5rem)] w-full origin-center rotate-6 border border-border bg-card"
+          <HeroSideCard
+            videoSrc={promoVideoSrc}
+            className="right-[calc(100%+1.5rem)] rotate-6"
           />
-          <div
-            aria-hidden="true"
-            className="absolute inset-y-0 left-[calc(100%+1.5rem)] w-full origin-center -rotate-6 border border-border bg-card"
+          <HeroSideCard
+            videoSrc={promoVideoSrc}
+            className="left-[calc(100%+1.5rem)] -rotate-6"
           />
           <HeroProductsScene />
           <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 text-xs tracking-wide text-fg-muted">
