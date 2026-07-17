@@ -14,7 +14,7 @@ export function createRenderer(host: HTMLElement): THREE.WebGLRenderer {
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.05
   renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  renderer.shadowMap.type = THREE.PCFShadowMap
   host.appendChild(renderer.domElement)
   return renderer
 }

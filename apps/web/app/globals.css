@@ -21,7 +21,7 @@
   --accent: #c45c6a;
   --accent-fg: #ffffff;
   --accent-2: #4a5568;
-  --accent-warm: #b1958a;
+  --accent-warm: #b5998e;
   --scene-bg: color-mix(in srgb, var(--accent-warm) 14%, var(--bg));
   --scene-edge: color-mix(in srgb, var(--accent-warm) 28%, var(--bg));
   --scene-warm: #b79b90;

@@ -46,7 +46,7 @@ export function HomeHero() {
 
   return (
     <section
-      className="relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_60%,var(--bg))_0%,var(--bg)_100%)]"
+      className="relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_60%,var(--bg))_0%,var(--bg)_50%,color-mix(in_srgb,var(--accent-warm)_80%,var(--bg))_100%)]"
       aria-labelledby="hero-title"
     >
       <div className="mx-auto flex min-h-[calc(100dvh-var(--header-h))] w-full max-w-content flex-col items-center px-4 pt-12 md:px-6 md:pt-16">
@@ -60,7 +60,7 @@ export function HomeHero() {
           >
             Artistry in Every Arc
           </h1>
-          <p className="mb-8 max-w-lg text-base leading-relaxed text-fg-muted md:text-lg">
+          <p className="mb-8 max-w-lg text-base leading-relaxed text-fg-muted italic md:text-lg">
             Experience the next generation of bespoke 3D creation.
           </p>
           <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
