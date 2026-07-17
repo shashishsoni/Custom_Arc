@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { listBlanks } from '@/lib/api'
 import { HomeHero } from '@/components/home-hero'
-import { MugJourneyScroll } from '@/components/mug-journey-scroll'
+import { MugJourneyScroll } from '@/components/product-journey/mug-journey-scroll'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
