@@ -27,7 +27,11 @@ export function createCamera(): THREE.PerspectiveCamera {
 
 export function createScene(): THREE.Scene {
   const scene = new THREE.Scene()
-  scene.fog = new THREE.Fog(cssVar('--scene-bg'), 8, 16)
+  const fogColor = new THREE.Color(cssVar('--accent-warm')).lerp(
+    new THREE.Color(cssVar('--bg')),
+    0.72,
+  )
+  scene.fog = new THREE.Fog(fogColor, 8, 16)
   return scene
 }
 

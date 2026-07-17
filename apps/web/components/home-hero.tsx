@@ -46,7 +46,7 @@ export function HomeHero() {
 
   return (
     <section
-      className="relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden bg-bg"
+      className="relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_60%,var(--bg))_0%,var(--bg)_100%)]"
       aria-labelledby="hero-title"
     >
       <div className="mx-auto flex min-h-[calc(100dvh-var(--header-h))] w-full max-w-content flex-col items-center px-4 pt-12 md:px-6 md:pt-16">
@@ -77,7 +77,7 @@ export function HomeHero() {
               href="/catalog"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'lg' }),
-                'min-h-11 w-full rounded border-border bg-transparent px-8 tracking-wide text-primary hover:border-primary sm:w-auto',
+                'min-h-11 w-full rounded border-white bg-transparent px-8 tracking-wide text-primary hover:border-white sm:w-auto',
               )}
             >
               Browse catalog

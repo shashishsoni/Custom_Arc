@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { listBlanks } from '@/lib/api'
 import { HomeHero } from '@/components/home-hero'
-import { HowItWorksScroll } from '@/components/how-it-works-scroll'
+import { MugJourneyScroll } from '@/components/mug-journey-scroll'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +13,7 @@ export default async function HomePage() {
   return (
     <main id="main" className="pb-12">
       <HomeHero />
-      <HowItWorksScroll />
+      <MugJourneyScroll />
 
       <section className="py-10 md:py-14">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -47,7 +47,13 @@ export default async function HomePage() {
           Tell us what you need and we&apos;ll be in touch. (Full B2B suite comes later.)
         </p>
         <form className="flex flex-col gap-3" action="/api/leads/bulk" method="post">
-          <Input name="email" type="email" placeholder="you@company.com" required className="min-h-11" />
+          <Input
+            name="email"
+            type="email"
+            placeholder="you@company.com"
+            required
+            className="min-h-11"
+          />
           <textarea
             name="note"
             placeholder="Quantities, products, timeline…"

@@ -21,9 +21,9 @@ export function HeroProductsScene() {
     <>
       <div
         ref={hostRef}
-        className="absolute inset-0 z-0 origin-center bg-scene-bg bg-[radial-gradient(ellipse_at_center,var(--scene-highlight)_0%,var(--scene-bg)_72%)] [transform:perspective(1200px)_rotateX(20deg)] [&_canvas]:block [&_canvas]:size-full [&_canvas]:touch-none [&_canvas]:outline-none"
+        className="absolute inset-0 z-0 origin-center border border-white bg-scene-bg bg-[radial-gradient(ellipse_at_center,var(--scene-bg)_0%,var(--scene-warm)_100%)] [transform:perspective(1200px)_rotateX(20deg)] [&_canvas]:block [&_canvas]:size-full [&_canvas]:touch-none [&_canvas]:outline-none"
         role="img"
-        aria-label="Interactive 3D CustomArc mug"
+        aria-label="Interactive 3D CustomArc mug and phone case"
       />
       {status !== 'ready' && (
         <p
@@ -31,7 +31,7 @@ export function HeroProductsScene() {
           role="status"
           aria-live="polite"
         >
-          {status === 'loading' ? 'Loading 3D mug…' : '3D preview unavailable'}
+          {status === 'loading' ? 'Loading 3D products…' : '3D preview unavailable'}
         </p>
       )}
     </>

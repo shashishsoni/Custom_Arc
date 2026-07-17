@@ -155,8 +155,8 @@ export function SiteHeader({ credits = 12, cartCount = 2 }: SiteHeaderProps) {
     <header
       role="banner"
       className={cn(
-        'fixed inset-x-0 top-0 z-[100] border-b border-border',
-        'bg-[var(--bg-elev)] shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]',
+        'fixed inset-x-0 top-0 z-[100] border-b border-white',
+        'bg-[color-mix(in_srgb,var(--accent-warm)_60%,var(--bg-elev))] shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]',
         'backdrop-blur-[14px] backdrop-saturate-[1.12]',
       )}
     >

@@ -21,7 +21,10 @@
   --accent: #c45c6a;
   --accent-fg: #ffffff;
   --accent-2: #4a5568;
-  --scene-bg: #efded8;
+  --accent-warm: #b1958a;
+  --scene-bg: color-mix(in srgb, var(--accent-warm) 14%, var(--bg));
+  --scene-edge: color-mix(in srgb, var(--accent-warm) 28%, var(--bg));
+  --scene-warm: #b79b90;
   --scene-highlight: #ffffff;
   --radius: 0.25rem;
   --radius-pill: 999px;
@@ -55,7 +58,7 @@
   --ring: var(--accent);
   --chart-1: var(--accent);
   --chart-2: var(--accent-2);
-  --chart-3: var(--fg-muted);
+  --chart-3: var(--accent-warm);
   --chart-4: var(--border);
   --chart-5: var(--fg);
   --sidebar: var(--bg);
@@ -81,7 +84,10 @@
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --color-accent-2: var(--accent-2);
+  --color-accent-warm: var(--accent-warm);
   --color-scene-bg: var(--scene-bg);
+  --color-scene-edge: var(--scene-edge);
+  --color-scene-warm: var(--scene-warm);
   --color-scene-highlight: var(--scene-highlight);
 
   --color-background: var(--background);
@@ -157,10 +163,10 @@
     @apply min-h-screen bg-bg text-fg;
     /* Multi-stop brand wash — hard to express cleanly in utilities alone */
     background-image:
-      radial-gradient(ellipse 95% 55% at 48% -8%, rgba(196, 92, 106, 0.08), transparent 56%),
-      radial-gradient(ellipse 55% 40% at 100% 18%, rgba(74, 85, 104, 0.05), transparent 50%),
-      radial-gradient(ellipse 40% 32% at 0% 38%, rgba(196, 92, 106, 0.035), transparent 46%),
-      linear-gradient(180deg, #fbf7f8 0%, #f8f2f4 42%, #fbf7f8 100%);
+      radial-gradient(ellipse 95% 55% at 48% -8%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 56%),
+      radial-gradient(ellipse 55% 40% at 100% 18%, color-mix(in srgb, var(--accent-warm) 15%, transparent), transparent 52%),
+      radial-gradient(ellipse 40% 32% at 0% 38%, color-mix(in srgb, var(--accent) 4%, transparent), transparent 46%),
+      linear-gradient(180deg, var(--bg) 0%, color-mix(in srgb, var(--accent-warm) 10%, var(--bg)) 46%, var(--bg) 100%);
     padding-top: var(--header-h);
     font-size: 15px;
     line-height: 1.6;
