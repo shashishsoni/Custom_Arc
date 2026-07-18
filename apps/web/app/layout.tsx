@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Outfit, Playfair_Display } from 'next/font/google'
-import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
+import { SiteFooter } from '@/components/site-footer'
 import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
 import './globals.css'
@@ -29,13 +29,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={cn(outfit.variable, playfair.variable, 'font-sans')}>
       <body>
         <SiteHeader />
-        <div className="mx-auto w-full max-w-content px-4 md:px-6">
-          {children}
-          <footer className="mt-16 flex flex-col gap-2 border-t border-border py-8 text-sm text-fg-muted sm:flex-row sm:items-center sm:justify-between">
-            <span>CustomArc — the arc of customization.</span>
-            <span>Phase 1 · build in progress</span>
-          </footer>
-        </div>
+        <div className="mx-auto w-full max-w-content px-4 md:px-6">{children}</div>
+        <SiteFooter />
         <Toaster richColors position="top-center" />
       </body>
     </html>

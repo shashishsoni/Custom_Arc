@@ -49,21 +49,19 @@ export function HomeHero() {
       className="relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_60%,var(--bg))_0%,var(--bg)_50%,color-mix(in_srgb,var(--accent-warm)_80%,var(--bg))_100%)]"
       aria-labelledby="hero-title"
     >
-      <div className="mx-auto flex min-h-[calc(100dvh-var(--header-h))] w-full max-w-content flex-col items-center px-4 pt-12 md:px-6 md:pt-16">
-        <div className="relative z-10 flex w-full max-w-2xl flex-col items-center text-center">
-          <p className="mb-3 font-heading text-2xl font-bold tracking-tight text-primary md:text-3xl">
-            CustomArc
-          </p>
+      <div className="mx-auto flex min-h-[calc(100dvh-var(--header-h))] w-full max-w-7xl flex-col items-center px-4 pt-8 pb-[clamp(5.25rem,10vw,9.5rem)] md:px-6 md:pt-10">
+        <div className="relative z-10 flex w-full max-w-2xl flex-col items-center pb-[clamp(3.4rem,7vw,5.75rem)] text-center">
           <h1
             id="hero-title"
-            className="mb-5 font-heading text-4xl leading-tight font-semibold tracking-tight text-fg md:text-5xl"
+            className="font-heading max-w-[12ch] text-[clamp(2.75rem,7vw,5.5rem)] leading-[0.9] font-semibold tracking-tight text-fg"
           >
-            Artistry in Every Arc
+            See it spin.
+            <span className="mt-1 block text-primary italic">Make it yours.</span>
           </h1>
-          <p className="mb-8 max-w-lg text-base leading-relaxed text-fg-muted italic md:text-lg">
+          <p className="mt-8 max-w-[600px] text-lg leading-relaxed text-fg-muted italic md:text-xl max-md:mt-6">
             Experience the next generation of bespoke 3D creation.
           </p>
-          <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
+          <div className="mt-8 flex w-full flex-col justify-center gap-6 sm:w-auto sm:flex-row">
             <Link
               href="/catalog"
               className={cn(
@@ -85,7 +83,7 @@ export function HomeHero() {
           </div>
         </div>
 
-        <div className="relative mt-6 h-[42vh] min-h-80 w-full max-w-4xl flex-1 md:mt-8 md:h-[58vh] md:min-h-[28rem]">
+        <div className="relative h-[42vh] min-h-80 w-full max-w-4xl flex-1 md:h-[58vh] md:min-h-[28rem]">
           <HeroSideCard
             videoSrc={promoVideoSrc}
             className="right-[calc(100%+1.5rem)] rotate-6"
