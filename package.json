@@ -19,6 +19,7 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:migrate": "pnpm --filter @customarc/db migrate:dev",
+    "db:seed": "pnpm --filter @customarc/db seed",
     "db:generate": "turbo generate",
     "api": "turbo dev --filter=@customarc/api",
     "web": "turbo dev --filter=@customarc/web"

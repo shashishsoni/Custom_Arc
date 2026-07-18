@@ -17,6 +17,7 @@ cp .env.example .env         # fill secrets
 pnpm db:up                   # local postgres
 pnpm db:generate             # prisma client
 pnpm db:migrate              # initial migration
+pnpm db:seed                 # mug + phone-case blanks
 pnpm dev                     # api + web in parallel
 ```
 

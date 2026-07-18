@@ -10,11 +10,15 @@ export default async function CatalogPage() {
 
   return (
     <main id="main" className="py-10 pb-16">
-      <h2 className="mb-2 text-3xl font-semibold tracking-tight text-fg">Catalog</h2>
-      <p className="mb-8 text-fg-muted">Two blanks, one perfected pipeline.</p>
+      <h2 className="mb-2 font-heading text-[clamp(2.5rem,6vw,4.5rem)] leading-[0.95] font-semibold tracking-tight text-fg">
+        Catalog
+      </h2>
+      <p className="mb-8 text-lg leading-relaxed text-fg-muted md:text-xl">
+        Two blanks, one perfected pipeline.
+      </p>
       <div className="grid gap-4 sm:grid-cols-2">
         {blanks.length === 0 ? (
-          <p className="text-fg-muted">No blanks loaded. Is the API running?</p>
+          <p className="text-fg-muted">No blanks loaded. Run <code className="text-fg">pnpm db:seed</code>.</p>
         ) : (
           blanks.map((b) => (
             <Link key={b.slug} href={`/customize/${b.slug}`} className="group block">

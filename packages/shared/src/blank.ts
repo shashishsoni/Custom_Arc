@@ -5,6 +5,15 @@ import { z } from 'zod'
  * Not code: adding a blank is config, not a release.
  */
 
+/** Absolute URL or root-relative path (`/model/mug.glb`) — public web assets or CDN. */
+export const assetRefSchema = z
+  .string()
+  .min(1)
+  .refine(
+    (v) => v.startsWith('/') || /^https?:\/\//i.test(v),
+    'expected URL or root-relative path',
+  )
+
 export const blankTemplateSpecSchema = z.object({
   /** Printable area in mm. */
   printableAreaMm: z.object({
@@ -20,10 +29,10 @@ export const blankTemplateSpecSchema = z.object({
   }),
   /** UV aspect ratio of the printable surface = printPixels ratio. */
   uvAspectRatio: z.number().positive(),
-  /** GLB asset URL with a clean single-island UV matching the template. */
-  modelUrl: z.url(),
-  /** Flat template preview image (the partner dieline), for reference. */
-  templateImageUrl: z.url().optional(),
+  /** GLB with a clean single-island UV matching the template. */
+  modelUrl: assetRefSchema,
+  /** Flat template preview image (partner dieline), optional. */
+  templateImageUrl: assetRefSchema.optional(),
 })
 export type BlankTemplateSpec = z.infer<typeof blankTemplateSpecSchema>
 
