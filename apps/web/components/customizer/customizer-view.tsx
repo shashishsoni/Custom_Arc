@@ -1,21 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Blank } from '@customarc/shared'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Blank, DesignDocument } from '@customarc/shared'
 import { CustomizerScene } from './customizer-scene'
-import type { Marker } from './blank-model'
+import { emptyDocForBlank, patchTransform } from './design-doc'
 import type { DesignTexture } from './design-texture'
+import { ToolsPanel } from './tools-panel'
+import { useDesignImages } from './use-design-images'
 import type { CustomizerCamera, CustomizerModelPose } from './view-config'
-
-function initialMarker(blank: Blank): Marker {
-  const { widthMm, heightMm } = blank.template.printableAreaMm
-  return {
-    xMm: widthMm * 0.38,
-    yMm: heightMm * 0.32,
-    widthMm: widthMm * 0.18,
-    heightMm: heightMm * 0.22,
-  }
-}
 
 type Props = {
   blank: Blank
@@ -24,41 +16,72 @@ type Props = {
 }
 
 export function CustomizerView({ blank, camera, model }: Props) {
-  const [marker, setMarker] = useState(() => initialMarker(blank))
-  const [design, setDesign] = useState<DesignTexture | null>(null)
+  const [doc, setDoc] = useState<DesignDocument>(() => emptyDocForBlank(blank))
+  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
+  const [texture, setTexture] = useState<DesignTexture | null>(null)
   const [activeZone, setActiveZone] = useState<string | null>(null)
   const flatHost = useRef<HTMLDivElement>(null)
+  const images = useDesignImages(doc)
 
-  const onTextureReady = useCallback((tex: DesignTexture) => setDesign(tex), [])
+  const selected = useMemo(
+    () => doc.layers.find((l) => l.id === selectedLayerId) ?? null,
+    [doc.layers, selectedLayerId],
+  )
+
+  const layerBox = selected
+    ? { widthMm: selected.transform.widthMm, heightMm: selected.transform.heightMm }
+    : null
+
+  const onTextureReady = useCallback((tex: DesignTexture) => setTexture(tex), [])
+
+  const onLayerOrigin = useCallback(
+    (origin: { xMm: number; yMm: number }) => {
+      if (!selectedLayerId) return
+      setDoc((prev) => patchTransform(prev, selectedLayerId, origin))
+    },
+    [selectedLayerId],
+  )
 
   useEffect(() => {
     const host = flatHost.current
-    if (!host || !design) return
-    const { canvas } = design
+    if (!host || !texture) return
+    const { canvas } = texture
     canvas.className = 'max-h-40 w-full max-w-xl rounded border border-border bg-transparent'
     host.replaceChildren(canvas)
     return () => {
       host.replaceChildren()
     }
-  }, [design])
+  }, [texture])
 
   const { widthMm, heightMm } = blank.template.printableAreaMm
 
   return (
     <div className="space-y-4">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded border border-border bg-card md:aspect-[16/10]">
-        <CustomizerScene
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded border border-border bg-card md:aspect-[16/10]">
+          <CustomizerScene
+            blank={blank}
+            doc={doc}
+            images={images}
+            layerBox={layerBox}
+            onLayerOrigin={onLayerOrigin}
+            onTextureReady={onTextureReady}
+            onActiveZone={setActiveZone}
+            camera={camera}
+            model={model}
+          />
+          <p className="pointer-events-none absolute bottom-3 left-3 text-xs font-bold tracking-widest text-primary uppercase">
+            {activeZone ? `Active · ${activeZone}` : 'Click a print zone'} · drag selected layer
+          </p>
+        </div>
+
+        <ToolsPanel
           blank={blank}
-          marker={marker}
-          onMarkerChange={setMarker}
-          onTextureReady={onTextureReady}
-          onActiveZone={setActiveZone}
-          camera={camera}
-          model={model}
+          doc={doc}
+          selectedLayerId={selectedLayerId}
+          onDocChange={setDoc}
+          onSelectLayer={setSelectedLayerId}
         />
-        <p className="pointer-events-none absolute bottom-3 left-3 text-xs font-bold tracking-widest text-primary uppercase">
-          {activeZone ? `Active · ${activeZone}` : 'Click a print zone'} · orbit empty space
-        </p>
       </div>
 
       <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
@@ -67,11 +90,11 @@ export function CustomizerView({ blank, camera, model }: Props) {
             Flat template (same mm)
           </p>
           <div ref={flatHost} className="max-w-xl" />
-          {!design && <p className="text-sm text-fg-muted">Loading print template…</p>}
+          {!texture && <p className="text-sm text-fg-muted">Loading print template…</p>}
         </div>
         <p className="text-sm text-fg-muted">
-          ART @ {marker.xMm.toFixed(1)}×{marker.yMm.toFixed(1)} mm · template {widthMm}×{heightMm}{' '}
-          mm · {blank.variants.length} variants
+          {doc.layers.length} layer{doc.layers.length === 1 ? '' : 's'} · template {widthMm}×
+          {heightMm} mm · bg {doc.background.color}
         </p>
       </div>
     </div>

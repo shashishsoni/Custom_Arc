@@ -4,32 +4,36 @@ import { useEffect, useRef } from 'react'
 import { useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { Mesh } from 'three'
+import type { LayerTransform } from '@customarc/shared'
 import { clampLayerOrigin, uvToMm } from './uv'
 import { uvBiasForMesh } from './uv-bias'
-import type { Marker } from './blank-model'
 
 type Args = {
   selectHit: (e: ThreeEvent<PointerEvent>) => Mesh | null
   isPrintable: (obj: unknown) => boolean
   template: { widthMm: number; heightMm: number }
-  marker: Marker
-  onMove: (next: Marker) => void
+  /** Mug / cylinder — wrap X across the UV seam. */
+  wrapX?: boolean
+  /** Selected layer box — drag updates origin only when set. */
+  layer: Pick<LayerTransform, 'widthMm' | 'heightMm'> | null
+  onMove: (origin: { xMm: number; yMm: number }) => void
   setOrbitEnabled: (on: boolean) => void
 }
 
-/** Smooth UV drag — uses R3F event UV (old path), no window raycast. */
+/** Smooth UV drag — places the selected layer under the pointer. */
 export function useSurfaceDrag({
   selectHit,
   isPrintable,
   template,
-  marker,
+  wrapX = false,
+  layer,
   onMove,
   setOrbitEnabled,
 }: Args) {
   const dragging = useRef(false)
   const dragMesh = useRef<Mesh | null>(null)
-  const markerRef = useRef(marker)
-  markerRef.current = marker
+  const layerRef = useRef(layer)
+  layerRef.current = layer
   const { gl } = useThree()
 
   useEffect(() => {
@@ -49,19 +53,19 @@ export function useSurfaceDrag({
   }, [gl, setOrbitEnabled])
 
   const place = (e: ThreeEvent<PointerEvent>, mesh: Mesh) => {
-    if (!e.uv || e.object !== mesh) return
+    const box = layerRef.current
+    if (!box || !e.uv || e.object !== mesh) return
     const { xMm, yMm } = uvToMm(e.uv.x, e.uv.y, template, uvBiasForMesh(mesh.name))
-    const m = markerRef.current
-    onMove({
-      ...m,
-      ...clampLayerOrigin(
-        xMm - m.widthMm / 2,
-        yMm - m.heightMm / 2,
-        m.widthMm,
-        m.heightMm,
+    onMove(
+      clampLayerOrigin(
+        xMm - box.widthMm / 2,
+        yMm - box.heightMm / 2,
+        box.widthMm,
+        box.heightMm,
         template,
+        wrapX,
       ),
-    })
+    )
   }
 
   return {

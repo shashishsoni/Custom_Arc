@@ -30,3 +30,6 @@ npm-debug.log*
 .agents
 docs
 prototype
+
+# local upload blobs (API fallback when R2 unset)
+apps/api/.data/

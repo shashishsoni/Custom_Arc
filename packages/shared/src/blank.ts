@@ -33,6 +33,11 @@ export const blankTemplateSpecSchema = z.object({
   modelUrl: assetRefSchema,
   /** Flat template preview image (partner dieline), optional. */
   templateImageUrl: assetRefSchema.optional(),
+  /**
+   * Cylindrical / wrap products: layers that cross the left/right seam continue
+   * on the other side (mug). Flat products (phone case) leave this false.
+   */
+  wrapHorizontal: z.boolean().default(false),
 })
 export type BlankTemplateSpec = z.infer<typeof blankTemplateSpecSchema>
 

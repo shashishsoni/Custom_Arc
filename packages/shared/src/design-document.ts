@@ -71,3 +71,14 @@ export type DesignDocument = z.infer<typeof designDocumentSchema>
 export function parseDesignDocument(input: unknown): DesignDocument {
   return designDocumentSchema.parse(input)
 }
+
+/** Empty design for a blank — white background, no layers (P1-08 tools fill layers). */
+export function createEmptyDesign(blankSlug: string, widthMm: number, heightMm: number): DesignDocument {
+  return {
+    version: 1,
+    blankSlug,
+    template: { widthMm, heightMm },
+    background: { color: '#ffffff' },
+    layers: [],
+  }
+}

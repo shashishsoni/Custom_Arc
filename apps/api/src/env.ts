@@ -32,3 +32,10 @@ export const GOOGLE_CLIENT_SECRET = optional('GOOGLE_CLIENT_SECRET')
 export const RESEND_API_KEY = optional('RESEND_API_KEY')
 export const EMAIL_FROM = optional('EMAIL_FROM', 'CustomArc <onboarding@resend.dev>')
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production'
+
+/** Cloudflare R2 (S3-compatible). When unset, uploads fall back to local disk. */
+export const R2_ACCOUNT_ID = optional('R2_ACCOUNT_ID')
+export const R2_ACCESS_KEY_ID = optional('R2_ACCESS_KEY_ID')
+export const R2_SECRET_ACCESS_KEY = optional('R2_SECRET_ACCESS_KEY')
+export const R2_BUCKET = optional('R2_BUCKET', 'customarc-uploads')
+export const R2_ENABLED = Boolean(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY)

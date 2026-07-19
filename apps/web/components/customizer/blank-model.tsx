@@ -5,7 +5,8 @@ import { useGLTF } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Mesh } from 'three'
-import type { Blank } from '@customarc/shared'
+import type { Blank, DesignDocument, LayerTransform } from '@customarc/shared'
+import type { DrawableImage } from '@customarc/design'
 import { createDesignTexture, type DesignTexture } from './design-texture'
 import {
   bindPrintableTexture,
@@ -16,12 +17,12 @@ import {
 import { useActivePrintable } from './use-active-printable'
 import { useSurfaceDrag } from './use-surface-drag'
 
-export type Marker = { xMm: number; yMm: number; widthMm: number; heightMm: number }
-
 type Props = {
   blank: Blank
-  marker: Marker
-  onMarkerChange: (m: Marker) => void
+  doc: DesignDocument
+  images: Map<string, DrawableImage>
+  layerBox: Pick<LayerTransform, 'widthMm' | 'heightMm'> | null
+  onLayerOrigin: (origin: { xMm: number; yMm: number }) => void
   setOrbitEnabled: (on: boolean) => void
   onTextureReady?: (tex: DesignTexture) => void
   onActiveZone?: (name: string | null) => void
@@ -29,8 +30,10 @@ type Props = {
 
 export function BlankModel({
   blank,
-  marker,
-  onMarkerChange,
+  doc,
+  images,
+  layerBox,
+  onLayerOrigin,
   setOrbitEnabled,
   onTextureReady,
   onActiveZone,
@@ -50,11 +53,12 @@ export function BlankModel({
 
   const meshes = useMemo(() => findPrintableMeshes(root), [root])
   const { active, selectHit } = useActivePrintable(meshes)
+  const wrapX = blank.template.wrapHorizontal
 
   useEffect(() => {
-    const design = createDesignTexture(widthMm, heightMm)
+    const design = createDesignTexture({ wrapHorizontal: wrapX })
     designRef.current = design
-    design.paint(marker)
+    design.paint(doc, images)
     onTextureReady?.(design)
     return () => {
       unbindRef.current?.()
@@ -63,7 +67,7 @@ export function BlankModel({
       designRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [widthMm, heightMm])
+  }, [widthMm, heightMm, wrapX])
 
   useEffect(() => {
     unbindRef.current?.()
@@ -83,23 +87,26 @@ export function BlankModel({
     }
   }, [active, onActiveZone, invalidate])
 
-  // Paint canvas + refresh active map clone (shares canvas image).
+  useEffect(() => {
+    designRef.current?.paint(doc, images)
+    const mat = active?.material
+    if (mat instanceof THREE.MeshStandardMaterial && mat.map) mat.map.needsUpdate = true
+    invalidate()
+  }, [doc, images, active, invalidate])
+
   const onMove = useCallback(
-    (next: Marker) => {
-      designRef.current?.paint(next)
-      const mat = active?.material
-      if (mat instanceof THREE.MeshStandardMaterial && mat.map) mat.map.needsUpdate = true
-      invalidate()
-      onMarkerChange(next)
+    (origin: { xMm: number; yMm: number }) => {
+      onLayerOrigin(origin)
     },
-    [active, invalidate, onMarkerChange],
+    [onLayerOrigin],
   )
 
   const drag = useSurfaceDrag({
     selectHit,
     isPrintable: (obj) => meshes.includes(obj as Mesh),
     template: { widthMm, heightMm },
-    marker,
+    wrapX,
+    layer: layerBox,
     onMove,
     setOrbitEnabled,
   })

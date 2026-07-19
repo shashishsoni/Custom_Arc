@@ -37,6 +37,11 @@ export interface RenderOptions {
   pxPerMm: number
   /** Preloaded images keyed by uploadId. The server resolves these from uploadId, never from the client URL. */
   images: Map<string, DrawableImage>
+  /**
+   * Cylinder / wrap products: redraw layers that cross the left/right seam at ±canvasWidth
+   * so art does not vanish at the template edge.
+   */
+  wrapHorizontal?: boolean
 }
 
 /** Pixels for a given mm extent at the render resolution. */
@@ -50,19 +55,19 @@ export function mmToPx(mm: number, pxPerMm: number): number {
  * construction: both renders consume the same document at different pxPerMm.
  */
 export function renderDesign(doc: DesignDocument, ctx: RenderContext, opts: RenderOptions): void {
-  const { pxPerMm, images } = opts
-  const widthPx = mmToPx(doc.template.widthMm, pxPerMm)
-  const heightPx = mmToPx(doc.template.heightMm, pxPerMm)
+  const { pxPerMm, images, wrapHorizontal = false } = opts
+  const widthPx = Math.round(mmToPx(doc.template.widthMm, pxPerMm))
+  const heightPx = Math.round(mmToPx(doc.template.heightMm, pxPerMm))
 
-  ctx.canvas.width = Math.round(widthPx)
-  ctx.canvas.height = Math.round(heightPx)
+  ctx.canvas.width = widthPx
+  ctx.canvas.height = heightPx
   ctx.clearRect(0, 0, widthPx, heightPx)
 
   ctx.fillStyle = doc.background.color
   ctx.fillRect(0, 0, widthPx, heightPx)
 
   for (const layer of doc.layers) {
-    renderLayer(layer, ctx, pxPerMm, images)
+    renderLayer(layer, ctx, pxPerMm, images, widthPx, wrapHorizontal)
   }
 }
 
@@ -71,17 +76,51 @@ function renderLayer(
   ctx: RenderContext,
   pxPerMm: number,
   images: Map<string, DrawableImage>,
+  canvasWidthPx: number,
+  wrapHorizontal: boolean,
 ): void {
-  ctx.save()
   const { transform } = layer
   const widthPx = mmToPx(transform.widthMm, pxPerMm)
   const heightPx = mmToPx(transform.heightMm, pxPerMm)
   const centerX = mmToPx(transform.xMm + transform.widthMm / 2, pxPerMm)
   const centerY = mmToPx(transform.yMm + transform.heightMm / 2, pxPerMm)
 
-  ctx.globalAlpha = transform.opacity
+  const offsets = wrapOffsets(centerX, widthPx, canvasWidthPx, wrapHorizontal)
+  for (const dx of offsets) {
+    paintLayerAt(layer, ctx, pxPerMm, images, widthPx, heightPx, centerX + dx, centerY)
+  }
+}
+
+/** ±1 canvas when the layer box crosses the horizontal seam. */
+function wrapOffsets(
+  centerX: number,
+  boxWidthPx: number,
+  canvasWidthPx: number,
+  wrapHorizontal: boolean,
+): number[] {
+  if (!wrapHorizontal || canvasWidthPx <= 0) return [0]
+  const left = centerX - boxWidthPx / 2
+  const right = centerX + boxWidthPx / 2
+  const out = [0]
+  if (right > canvasWidthPx) out.push(-canvasWidthPx)
+  if (left < 0) out.push(canvasWidthPx)
+  return out
+}
+
+function paintLayerAt(
+  layer: Layer,
+  ctx: RenderContext,
+  pxPerMm: number,
+  images: Map<string, DrawableImage>,
+  widthPx: number,
+  heightPx: number,
+  centerX: number,
+  centerY: number,
+): void {
+  ctx.save()
+  ctx.globalAlpha = layer.transform.opacity
   ctx.translate(centerX, centerY)
-  ctx.rotate((transform.rotationDeg * Math.PI) / 180)
+  ctx.rotate((layer.transform.rotationDeg * Math.PI) / 180)
 
   if (layer.type === 'image') {
     drawImageLayer(layer, ctx, images, widthPx, heightPx)

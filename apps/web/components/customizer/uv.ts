@@ -25,16 +25,26 @@ export function wrapMm(value: number, period: number) {
   return ((value % period) + period) % period
 }
 
-/** Clamp height; wrap X for cylindrical printables. */
+type TemplateSize = Pick<BlankTemplateSpec['printableAreaMm'], 'widthMm' | 'heightMm'>
+
+/**
+ * Clamp height always.
+ * X: wrap around for cylindrical blanks; hard-clamp for flat blanks (phone case).
+ */
 export function clampLayerOrigin(
   xMm: number,
   yMm: number,
   layerW: number,
   layerH: number,
-  template: Pick<BlankTemplateSpec['printableAreaMm'], 'widthMm' | 'heightMm'>,
+  template: TemplateSize,
+  wrapX = false,
 ) {
+  const y = Math.min(Math.max(0, yMm), Math.max(0, template.heightMm - layerH))
+  if (wrapX) {
+    return { xMm: wrapMm(xMm, template.widthMm), yMm: y }
+  }
   return {
-    xMm: wrapMm(xMm, template.widthMm),
-    yMm: Math.min(Math.max(0, yMm), Math.max(0, template.heightMm - layerH)),
+    xMm: Math.min(Math.max(0, xMm), Math.max(0, template.widthMm - layerW)),
+    yMm: y,
   }
 }

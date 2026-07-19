@@ -10,8 +10,9 @@ import {
   PerspectiveCamera,
 } from '@react-three/drei'
 import * as THREE from 'three'
-import type { Blank } from '@customarc/shared'
-import { BlankModel, type Marker } from './blank-model'
+import type { Blank, DesignDocument, LayerTransform } from '@customarc/shared'
+import type { DrawableImage } from '@customarc/design'
+import { BlankModel } from './blank-model'
 import type { DesignTexture } from './design-texture'
 import {
   DEFAULT_CAMERA,
@@ -22,8 +23,10 @@ import {
 
 type Props = {
   blank: Blank
-  marker: Marker
-  onMarkerChange: (m: Marker) => void
+  doc: DesignDocument
+  images: Map<string, DrawableImage>
+  layerBox: Pick<LayerTransform, 'widthMm' | 'heightMm'> | null
+  onLayerOrigin: (origin: { xMm: number; yMm: number }) => void
   onTextureReady?: (tex: DesignTexture) => void
   onActiveZone?: (name: string | null) => void
   camera?: CustomizerCamera
@@ -52,8 +55,10 @@ function Loader() {
 
 export function CustomizerScene({
   blank,
-  marker,
-  onMarkerChange,
+  doc,
+  images,
+  layerBox,
+  onLayerOrigin,
   onTextureReady,
   onActiveZone,
   camera: cameraProp,
@@ -97,8 +102,10 @@ export function CustomizerScene({
         <group position={pose.position} scale={pose.scale} rotation={pose.rotation}>
           <BlankModel
             blank={blank}
-            marker={marker}
-            onMarkerChange={onMarkerChange}
+            doc={doc}
+            images={images}
+            layerBox={layerBox}
+            onLayerOrigin={onLayerOrigin}
             setOrbitEnabled={setOrbitEnabled}
             onTextureReady={onTextureReady}
             onActiveZone={onActiveZone}

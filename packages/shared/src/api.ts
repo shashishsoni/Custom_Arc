@@ -27,3 +27,14 @@ export const generationRequestSchema = z.object({
   prompt: z.string().min(1).max(1000),
 })
 export type GenerationRequest = z.infer<typeof generationRequestSchema>
+
+/** POST /uploads response — previewUrl is a short-lived signed URL (spec §7.4). */
+export const uploadResultSchema = z.object({
+  id: z.string().min(1),
+  previewUrl: z.url(),
+  mimeType: z.string().min(1),
+  widthPx: z.number().int().positive(),
+  heightPx: z.number().int().positive(),
+  sizeBytes: z.number().int().nonnegative(),
+})
+export type UploadResult = z.infer<typeof uploadResultSchema>
