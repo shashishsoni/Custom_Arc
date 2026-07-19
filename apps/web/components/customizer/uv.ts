@@ -1,18 +1,21 @@
 import type { BlankTemplateSpec } from '@customarc/shared'
+import type { UvBias } from './uv-bias'
 
 /**
  * UV (0–1) → template-mm.
- * Design docs use top-left origin; GLTF UV is bottom-left.
- * U is flipped to match CanvasTexture.repeat.x = -1 (outside-readable art).
+ * Bias must match the texture transform on that printable (`uvBiasForMesh`).
  */
 export function uvToMm(
   u: number,
   v: number,
   { widthMm, heightMm }: { widthMm: number; heightMm: number },
+  bias: UvBias = { flipU: false, flipV: false },
 ) {
+  const uu = bias.flipU ? 1 - u : u
+  const vv = bias.flipV ? 1 - v : v
   return {
-    xMm: (1 - u) * widthMm,
-    yMm: v * heightMm,
+    xMm: uu * widthMm,
+    yMm: vv * heightMm,
   }
 }
 
@@ -22,9 +25,7 @@ export function wrapMm(value: number, period: number) {
   return ((value % period) + period) % period
 }
 
-/**
- * Clamp height to template; wrap X for cylindrical printable (seamless left↔right).
- */
+/** Clamp height; wrap X for cylindrical printables. */
 export function clampLayerOrigin(
   xMm: number,
   yMm: number,

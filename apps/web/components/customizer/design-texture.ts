@@ -49,11 +49,8 @@ export function createDesignTexture(widthMm: number, heightMm: number): DesignTe
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   texture.flipY = false
-  // Mug UV unwrap reads mirrored from outside — flip U so ART matches flat template.
-  texture.wrapS = THREE.RepeatWrapping
-  texture.repeat.x = -1
-  texture.offset.x = 1
   texture.anisotropy = 4
+  // Per-mesh flip lives on clones in bindPrintableTexture (uv-bias) — never on the source.
 
   const paint = (marker: { xMm: number; yMm: number; widthMm: number; heightMm: number }) => {
     drawTestGrid(ctx, widthMm, heightMm, PREVIEW_PX_PER_MM)

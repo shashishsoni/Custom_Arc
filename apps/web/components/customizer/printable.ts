@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { cloneMapForMesh } from './uv-bias'
 
 const NAME_HINT = /print|wrap|band|decal|custom|art|label|surface/i
 
@@ -39,9 +40,10 @@ export function paintMugWhite(root: THREE.Object3D) {
   })
 }
 
-/** Transparent design map — small ART card only; rest stays white. */
-export function bindPrintableTexture(mesh: THREE.Mesh, map: THREE.Texture) {
+/** Bind design map with that mesh’s UV bias (clone so zones don’t fight). */
+export function bindPrintableTexture(mesh: THREE.Mesh, source: THREE.Texture) {
   const prev = mesh.material
+  const map = cloneMapForMesh(source, mesh.name)
   const mat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     map,
@@ -54,6 +56,7 @@ export function bindPrintableTexture(mesh: THREE.Mesh, map: THREE.Texture) {
   mesh.material = mat
   return () => {
     mat.dispose()
+    map.dispose()
     mesh.material = prev
   }
 }

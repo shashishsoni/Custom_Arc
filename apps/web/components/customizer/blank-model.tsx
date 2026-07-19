@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
+import * as THREE from 'three'
 import type { Mesh } from 'three'
 import type { Blank } from '@customarc/shared'
 import { createDesignTexture, type DesignTexture } from './design-texture'
@@ -82,14 +83,16 @@ export function BlankModel({
     }
   }, [active, onActiveZone, invalidate])
 
-  // Paint canvas directly — avoids laggy React→effect→paint loop while dragging.
+  // Paint canvas + refresh active map clone (shares canvas image).
   const onMove = useCallback(
     (next: Marker) => {
       designRef.current?.paint(next)
+      const mat = active?.material
+      if (mat instanceof THREE.MeshStandardMaterial && mat.map) mat.map.needsUpdate = true
       invalidate()
       onMarkerChange(next)
     },
-    [invalidate, onMarkerChange],
+    [active, invalidate, onMarkerChange],
   )
 
   const drag = useSurfaceDrag({

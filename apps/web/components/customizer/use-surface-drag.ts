@@ -5,6 +5,7 @@ import { useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { Mesh } from 'three'
 import { clampLayerOrigin, uvToMm } from './uv'
+import { uvBiasForMesh } from './uv-bias'
 import type { Marker } from './blank-model'
 
 type Args = {
@@ -49,7 +50,7 @@ export function useSurfaceDrag({
 
   const place = (e: ThreeEvent<PointerEvent>, mesh: Mesh) => {
     if (!e.uv || e.object !== mesh) return
-    const { xMm, yMm } = uvToMm(e.uv.x, e.uv.y, template)
+    const { xMm, yMm } = uvToMm(e.uv.x, e.uv.y, template, uvBiasForMesh(mesh.name))
     const m = markerRef.current
     onMove({
       ...m,
