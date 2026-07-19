@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { listBlanks } from '@/lib/api'
+import { listBlanks } from '@/modules/catalog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 

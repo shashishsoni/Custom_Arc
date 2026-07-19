@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { ok } from '@customarc/shared'
+import { API_CREDITS } from '@customarc/shared/constants'
 import { withAuth } from '../auth/plugin.ts'
 import { creditsService } from './service.ts'
 
@@ -8,7 +9,7 @@ import { creditsService } from './service.ts'
  * other modules (e.g. AI generation) with a correlationId. Exposed here for the
  * account page and for manual/integration testing.
  */
-export const creditsRoutes = new Elysia({ prefix: '/credits' })
+export const creditsRoutes = new Elysia({ prefix: API_CREDITS })
   .use(withAuth)
   .get('/balance', async ({ user }) => ok(await creditsService.getBalance(user.id)))
   .post(

@@ -8,6 +8,7 @@ import type { DesignTexture } from '../design/design-texture'
 import { ToolsPanel } from '../tools'
 import { useDesignImages } from '../design/use-design-images'
 import type { CustomizerCamera, CustomizerModelPose } from '../scene/view-config'
+import { SaveDesignBar } from './save-design-bar'
 
 type Props = {
   blank: Blank
@@ -20,6 +21,7 @@ export function CustomizerView({ blank, camera, model }: Props) {
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [texture, setTexture] = useState<DesignTexture | null>(null)
   const [activeZone, setActiveZone] = useState<string | null>(null)
+  const [designId, setDesignId] = useState<string | null>(null)
   const flatHost = useRef<HTMLDivElement>(null)
   const images = useDesignImages(doc)
 
@@ -75,13 +77,21 @@ export function CustomizerView({ blank, camera, model }: Props) {
           </p>
         </div>
 
-        <ToolsPanel
-          blank={blank}
-          doc={doc}
-          selectedLayerId={selectedLayerId}
-          onDocChange={setDoc}
-          onSelectLayer={setSelectedLayerId}
-        />
+        <div className="space-y-4">
+          <ToolsPanel
+            blank={blank}
+            doc={doc}
+            selectedLayerId={selectedLayerId}
+            onDocChange={setDoc}
+            onSelectLayer={setSelectedLayerId}
+          />
+          <SaveDesignBar
+            blankSlug={blank.slug}
+            doc={doc}
+            designId={designId}
+            onSaved={setDesignId}
+          />
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
@@ -95,6 +105,7 @@ export function CustomizerView({ blank, camera, model }: Props) {
         <p className="text-sm text-fg-muted">
           {doc.layers.length} layer{doc.layers.length === 1 ? '' : 's'} · template {widthMm}×
           {heightMm} mm · bg {doc.background.color}
+          {designId ? ` · saved ${designId.slice(0, 8)}` : ''}
         </p>
       </div>
     </div>

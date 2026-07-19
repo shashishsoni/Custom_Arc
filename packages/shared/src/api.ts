@@ -38,3 +38,11 @@ export const uploadResultSchema = z.object({
   sizeBytes: z.number().int().nonnegative(),
 })
 export type UploadResult = z.infer<typeof uploadResultSchema>
+
+/** POST/PATCH /designs — id used for subsequent patches. */
+export const savedDesignSchema = z.object({
+  id: z.string().min(1),
+  blankId: z.string().min(1),
+  name: z.string().nullable(),
+})
+export type SavedDesign = z.infer<typeof savedDesignSchema>

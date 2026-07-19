@@ -23,10 +23,12 @@ export class DesignerService {
     document: unknown
     name?: string
   }): Promise<DesignRow> {
+    const blankId = await this.repo.resolveBlankId(input.blankId)
+    if (!blankId) throw notFound('Blank not found')
     const document = parseDesignDocument(input.document) as DesignDocument
     return this.repo.create({
       userId: input.userId,
-      blankId: input.blankId,
+      blankId,
       document,
       name: input.name,
     })

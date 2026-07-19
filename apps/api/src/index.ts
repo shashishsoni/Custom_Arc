@@ -1,7 +1,14 @@
-// Load workspace-root .env before anything else (prisma reads DATABASE_URL at import).
-import { API_BASE_URL, API_PORT } from './env.ts'
+// Load workspace-root .env before shared constants / prisma.
+import './load-env.ts'
+import {
+  API_BASE_URL,
+  API_PORT,
+  assertServerEnv,
+} from '@customarc/shared/constants'
 import { app } from './app.ts'
 import { logger } from './logger.ts'
+
+assertServerEnv()
 
 app.listen(API_PORT, (handler) => {
   logger.info('api listening', { port: API_PORT, baseUrl: API_BASE_URL, host: handler.hostname })

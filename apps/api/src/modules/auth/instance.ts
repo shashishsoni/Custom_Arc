@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { emailOTP, magicLink } from 'better-auth/plugins'
 import { prisma } from '@customarc/db'
-import { API_BASE_URL, AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, WEB_BASE_URL } from '../../env.ts'
+import { API_BASE_URL, AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, WEB_BASE_URL } from '@customarc/shared/constants'
 import { creditsService } from '../credits/service.ts'
 import { sendMagicLinkEmail, sendOtpEmail } from './mail.ts'
 

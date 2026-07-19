@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia'
 import { cors } from '@elysiajs/cors'
 import { err } from '@customarc/shared'
-import { WEB_BASE_URL, LOG_LEVEL } from './env.ts'
+import { WEB_BASE_URL, LOG_LEVEL, API_HEALTH } from '@customarc/shared/constants'
 import { logger } from './logger.ts'
 import { ApiError } from './errors.ts'
 import { authPlugin } from './modules/auth/plugin.ts'
@@ -27,7 +27,7 @@ export const app = new Elysia()
   .use(creditsRoutes)
   .use(leadRoutes)
   .use(uploadRoutes)
-  .get('/health', () => ({ status: 'ok', service: 'customarc-api', env: LOG_LEVEL }))
+  .get(API_HEALTH, () => ({ status: 'ok', service: 'customarc-api', env: LOG_LEVEL }))
   .onError(({ code, error, set }) => {
     if (error instanceof ApiError) {
       set.status = error.statusCode

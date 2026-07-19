@@ -13,6 +13,8 @@ export interface DesignRow {
 export interface DesignerRepo {
   listByUser(userId: string): Promise<DesignRow[]>
   getById(id: string): Promise<DesignRow | null>
+  /** Accepts Blank.id or Blank.slug (web sends slug). */
+  resolveBlankId(idOrSlug: string): Promise<string | null>
   create(input: {
     userId: string
     blankId: string
@@ -32,6 +34,19 @@ export const designerRepo: DesignerRepo = {
 
   async getById(id) {
     return (await prisma.design.findUnique({ where: { id } })) as DesignRow | null
+  },
+
+  async resolveBlankId(idOrSlug) {
+    const byId = await prisma.blank.findUnique({
+      where: { id: idOrSlug },
+      select: { id: true },
+    })
+    if (byId) return byId.id
+    const bySlug = await prisma.blank.findUnique({
+      where: { slug: idOrSlug },
+      select: { id: true },
+    })
+    return bySlug?.id ?? null
   },
 
   async create(input) {

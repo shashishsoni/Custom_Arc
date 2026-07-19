@@ -1,12 +1,13 @@
 import { Elysia, t } from 'elysia'
 import { ok } from '@customarc/shared'
+import { API_UPLOADS } from '@customarc/shared/constants'
 import { unauthorized } from '../../errors.ts'
 import { withAuth } from '../auth/plugin.ts'
 import { uploadsService } from './service.ts'
 import { verifyUploadAccess } from './sign.ts'
 
 /** Content is HMAC-signed (no session). Create requires auth. */
-export const uploadRoutes = new Elysia({ prefix: '/uploads' })
+export const uploadRoutes = new Elysia({ prefix: API_UPLOADS })
   .get(
     '/:id/content',
     async ({ params, query }) => {

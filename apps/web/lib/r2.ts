@@ -1,3 +1,5 @@
+import { R2_PUBLIC_BASE_URL } from '@customarc/shared/constants'
+
 /** Object keys in the R2 bucket (no leading slash). */
 export const r2Keys = {
   premiumProVideo: 'CustomArc-Local/CustomArc-video/Create_a_second_premium_pro.mp4',
@@ -5,12 +7,9 @@ export const r2Keys = {
 
 export type R2KeyName = keyof typeof r2Keys
 
-/**
- * Public CDN base for browser media.
- * Use ONLY `NEXT_PUBLIC_*` here — falling back to server-only env causes SSR/client hydration mismatches.
- */
+/** Public CDN base for browser media (`NEXT_PUBLIC_R2_PUBLIC_BASE_URL`). */
 export function getR2PublicBaseUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL?.trim() ?? ''
+  const raw = R2_PUBLIC_BASE_URL
   if (!raw) return ''
   const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
   return withProtocol.replace(/\/+$/, '')

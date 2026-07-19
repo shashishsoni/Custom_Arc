@@ -8,7 +8,7 @@ import {
   R2_BUCKET,
   R2_ENABLED,
   R2_SECRET_ACCESS_KEY,
-} from '../../env.ts'
+} from '@customarc/shared/constants'
 
 /**
  * Bucket layout (matches CustomArc-Local/ marketing assets):

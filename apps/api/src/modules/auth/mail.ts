@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { Resend } from 'resend'
 import { render } from 'react-email'
-import { EMAIL_FROM, IS_PRODUCTION, RESEND_API_KEY } from '../../env.ts'
+import { EMAIL_FROM, IS_PRODUCTION, RESEND_API_KEY } from '@customarc/shared/constants'
 import { logger } from '../../logger.ts'
 import { MagicLinkEmail, magicLinkText } from './emails/magic-link.tsx'
 import { OtpEmail, otpText } from './emails/otp.tsx'

@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { AUTH_SECRET, API_BASE_URL } from '../../env.ts'
+import { AUTH_SECRET, API_UPLOADS, apiUrl } from '@customarc/shared/constants'
 
 const TTL_SEC = 60 * 60 // 1h
 
@@ -21,5 +21,5 @@ export function verifyUploadAccess(uploadId: string, expSec: number, sig: string
 export function signedPreviewUrl(uploadId: string): string {
   const exp = Math.floor(Date.now() / 1000) + TTL_SEC
   const sig = signUploadAccess(uploadId, exp)
-  return `${API_BASE_URL}/uploads/${uploadId}/content?exp=${exp}&sig=${sig}`
+  return `${apiUrl(`${API_UPLOADS}/${uploadId}/content`)}?exp=${exp}&sig=${sig}`
 }

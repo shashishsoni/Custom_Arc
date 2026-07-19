@@ -1,12 +1,61 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import type { Blank, DesignDocument, Layer } from '@customarc/shared'
+import type { Blank, DesignDocument, Layer, UploadResult } from '@customarc/shared'
+import { uploadResultSchema } from '@customarc/shared'
+import { API_UPLOADS, apiUrl } from '@customarc/shared/constants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { uploadDesignImage } from '@/lib/uploads'
 import { makeImageLayer, makeTextLayer, patchTransform, updateLayer } from '../../design/design-doc'
+
+async function uploadDesignImage(
+  file: File,
+  blank: Pick<Blank, 'slug' | 'category'>,
+): Promise<UploadResult> {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('category', blank.category)
+  form.append('productSlug', blank.slug)
+
+  const res = await fetch(apiUrl(API_UPLOADS), {
+    method: 'POST',
+    body: form,
+    credentials: 'include',
+  })
+
+  if (res.ok) {
+    const body = (await res.json()) as { success: boolean; data?: unknown; error?: string }
+    if (!body.success || body.data === undefined) throw new Error(body.error ?? 'Upload failed')
+    return uploadResultSchema.parse(body.data)
+  }
+
+  if (res.status === 401) {
+    const url = URL.createObjectURL(file)
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new Image()
+        el.onload = () => resolve(el)
+        el.onerror = () => reject(new Error('Could not read image'))
+        el.src = url
+      })
+      return {
+        id: `local-${crypto.randomUUID()}`,
+        previewUrl: url,
+        mimeType: file.type || 'image/jpeg',
+        widthPx: img.naturalWidth,
+        heightPx: img.naturalHeight,
+        sizeBytes: file.size,
+      }
+    } catch (e) {
+      URL.revokeObjectURL(url)
+      throw e
+    }
+  }
+
+  const body = (await res.json().catch(() => null)) as { error?: string } | null
+  throw new Error(body?.error ?? `Upload failed (${res.status})`)
+}
 
 type Props = {
   blank: Blank
