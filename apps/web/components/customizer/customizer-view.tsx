@@ -5,6 +5,7 @@ import type { Blank } from '@customarc/shared'
 import { CustomizerScene } from './customizer-scene'
 import type { Marker } from './blank-model'
 import type { DesignTexture } from './design-texture'
+import type { CustomizerCamera, CustomizerModelPose } from './view-config'
 
 function initialMarker(blank: Blank): Marker {
   const { widthMm, heightMm } = blank.template.printableAreaMm
@@ -16,7 +17,13 @@ function initialMarker(blank: Blank): Marker {
   }
 }
 
-export function CustomizerView({ blank }: { blank: Blank }) {
+type Props = {
+  blank: Blank
+  camera?: CustomizerCamera
+  model?: CustomizerModelPose
+}
+
+export function CustomizerView({ blank, camera, model }: Props) {
   const [marker, setMarker] = useState(() => initialMarker(blank))
   const [design, setDesign] = useState<DesignTexture | null>(null)
   const flatHost = useRef<HTMLDivElement>(null)
@@ -27,7 +34,7 @@ export function CustomizerView({ blank }: { blank: Blank }) {
     const host = flatHost.current
     if (!host || !design) return
     const { canvas } = design
-    canvas.className = 'max-h-40 w-full max-w-xl rounded border border-border bg-card'
+    canvas.className = 'max-h-40 w-full max-w-xl rounded border border-border bg-transparent'
     host.replaceChildren(canvas)
     return () => {
       host.replaceChildren()
@@ -44,6 +51,8 @@ export function CustomizerView({ blank }: { blank: Blank }) {
           marker={marker}
           onMarkerChange={setMarker}
           onTextureReady={onTextureReady}
+          camera={camera}
+          model={model}
         />
         <p className="pointer-events-none absolute bottom-3 left-3 text-xs font-bold tracking-widest text-primary uppercase">
           Drag on surface · orbit empty space
@@ -55,7 +64,7 @@ export function CustomizerView({ blank }: { blank: Blank }) {
           <p className="mb-2 text-xs font-bold tracking-widest text-primary uppercase">
             Flat template (same mm)
           </p>
-          <div ref={flatHost} />
+          <div ref={flatHost} className="max-w-xl" />
           {!design && <p className="text-sm text-fg-muted">Loading print template…</p>}
         </div>
         <p className="text-sm text-fg-muted">

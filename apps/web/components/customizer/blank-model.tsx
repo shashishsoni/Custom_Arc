@@ -5,7 +5,12 @@ import { useGLTF } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
 import type { Blank } from '@customarc/shared'
 import { createDesignTexture, type DesignTexture } from './design-texture'
-import { bindPrintableTexture, findPrintableMesh, normalizeModel } from './printable'
+import {
+  bindPrintableTextures,
+  findPrintableMesh,
+  findPrintableMeshes,
+  normalizeModel,
+} from './printable'
 import { useSurfaceDrag } from './use-surface-drag'
 
 export type Marker = { xMm: number; yMm: number; widthMm: number; heightMm: number }
@@ -36,13 +41,14 @@ export function BlankModel({
     return clone
   }, [scene])
 
+  const meshes = useMemo(() => findPrintableMeshes(root), [root])
   const mesh = useMemo(() => findPrintableMesh(root), [root])
 
   useEffect(() => {
     const design = createDesignTexture(widthMm, heightMm)
     designRef.current = design
     onTextureReady?.(design)
-    const unbind = mesh ? bindPrintableTexture(mesh, design.texture) : () => {}
+    const unbind = bindPrintableTextures(meshes, design.texture)
     design.paint(marker)
     invalidate()
     return () => {
@@ -52,7 +58,7 @@ export function BlankModel({
     }
     // Bind once per model/template; marker paints in the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mesh, widthMm, heightMm, invalidate])
+  }, [meshes, widthMm, heightMm, invalidate])
 
   useEffect(() => {
     designRef.current?.paint(marker)

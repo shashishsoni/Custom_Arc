@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import type { Blank } from '@customarc/shared'
+import type { CustomizerCamera, CustomizerModelPose } from './view-config'
 
 const CustomizerView = dynamic(
   () => import('./customizer-view').then((m) => m.CustomizerView),
@@ -15,6 +16,15 @@ const CustomizerView = dynamic(
   },
 )
 
-export function Customizer({ blank }: { blank: Blank }) {
-  return <CustomizerView blank={blank} />
+export type CustomizerProps = {
+  blank: Blank
+  camera?: CustomizerCamera
+  model?: CustomizerModelPose
 }
+
+export function Customizer({ blank, camera, model }: CustomizerProps) {
+  return <CustomizerView blank={blank} camera={camera} model={model} />
+}
+
+export type { CustomizerCamera, CustomizerModelPose, CustomizerViewConfig } from './view-config'
+export { viewForSlug, DEFAULT_VIEW, VIEW_BY_SLUG } from './view-config'

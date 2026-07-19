@@ -52,7 +52,7 @@ const BLANKS: {
     slug: 'mug',
     name: 'Classic Mug',
     category: 'mug',
-    template: template(210, 95, 3, '/model/mug.glb'),
+    template: template(210, 95, 3, '/model/mug-print.glb?v=3'),
     variants: [
       { name: '11oz', partnerSku: 'CA-MUG-11', priceMinor: 49900, currency: 'INR' },
       { name: '15oz', partnerSku: 'CA-MUG-15', priceMinor: 59900, currency: 'INR' },

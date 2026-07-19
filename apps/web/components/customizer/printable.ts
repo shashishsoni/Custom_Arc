@@ -2,16 +2,17 @@ import * as THREE from 'three'
 
 const NAME_HINT = /print|wrap|band|decal|custom|art|label|surface/i
 
-/** Prefer a named printable mesh; else largest UV mesh (marketing GLBs lack a dedicated island yet). */
-export function findPrintableMesh(root: THREE.Object3D): THREE.Mesh | null {
-  let named: THREE.Mesh | null = null
+/** All meshes meant to receive the design texture (body / handle / bottom). */
+export function findPrintableMeshes(root: THREE.Object3D): THREE.Mesh[] {
+  const named: THREE.Mesh[] = []
   let largest: THREE.Mesh | null = null
   let best = 0
 
   root.traverse((obj) => {
     if (!(obj instanceof THREE.Mesh) || !obj.geometry?.getAttribute('uv')) return
-    if (!named && NAME_HINT.test(obj.name)) named = obj
-
+    if (NAME_HINT.test(obj.name) || obj.name.startsWith('printable')) {
+      named.push(obj)
+    }
     obj.geometry.computeBoundingBox()
     const box = obj.geometry.boundingBox
     if (!box) return
@@ -23,10 +24,17 @@ export function findPrintableMesh(root: THREE.Object3D): THREE.Mesh | null {
     }
   })
 
-  return named ?? largest
+  if (named.length) return named
+  return largest ? [largest] : []
 }
 
-/** Bind CanvasTexture to the printable material; toneMapped off so art stays sRGB-true. */
+/** Primary wrap surface for raycast drag — prefer exact `printable`. */
+export function findPrintableMesh(root: THREE.Object3D): THREE.Mesh | null {
+  const all = findPrintableMeshes(root)
+  return all.find((m) => m.name === 'printable' || m.name.endsWith('printable')) ?? all[0] ?? null
+}
+
+/** Bind CanvasTexture to one printable material; toneMapped off so art stays sRGB-true. */
 export function bindPrintableTexture(mesh: THREE.Mesh, map: THREE.Texture) {
   const prev = mesh.material
   const base = Array.isArray(prev) ? prev[0] : prev
@@ -34,6 +42,8 @@ export function bindPrintableTexture(mesh: THREE.Mesh, map: THREE.Texture) {
 
   mat.map = map
   mat.toneMapped = false
+  mat.side = THREE.DoubleSide
+  mat.transparent = true
   mat.needsUpdate = true
   mesh.material = mat
 
@@ -41,6 +51,12 @@ export function bindPrintableTexture(mesh: THREE.Mesh, map: THREE.Texture) {
     mat.dispose()
     mesh.material = prev
   }
+}
+
+/** Bind the same design texture to every printable zone. */
+export function bindPrintableTextures(meshes: THREE.Mesh[], map: THREE.Texture) {
+  const unbinds = meshes.map((m) => bindPrintableTexture(m, map))
+  return () => unbinds.forEach((u) => u())
 }
 
 export function normalizeModel(root: THREE.Object3D, targetHeight = 2.2) {
