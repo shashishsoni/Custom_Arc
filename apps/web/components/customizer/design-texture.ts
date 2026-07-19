@@ -1,13 +1,9 @@
 import * as THREE from 'three'
+import { cssVar } from '@/lib/css-var'
 import { drawTestGrid } from './test-grid'
 import { wrapMm } from './uv'
 
 const PREVIEW_PX_PER_MM = 4
-
-function cssVar(name: string, fallback: string) {
-  if (typeof document === 'undefined') return fallback
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
-}
 
 export type DesignTexture = {
   canvas: HTMLCanvasElement
@@ -84,10 +80,10 @@ export function createDesignTexture(widthMm: number, heightMm: number): DesignTe
   }
 
   paint({
-    xMm: widthMm * 0.35,
-    yMm: heightMm * 0.3,
-    widthMm: widthMm * 0.3,
-    heightMm: heightMm * 0.4,
+    xMm: widthMm * 0.38,
+    yMm: heightMm * 0.32,
+    widthMm: widthMm * 0.18,
+    heightMm: heightMm * 0.22,
   })
 
   return {

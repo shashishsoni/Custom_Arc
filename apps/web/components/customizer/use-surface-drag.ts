@@ -5,20 +5,28 @@ import { useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { Mesh } from 'three'
 import { clampLayerOrigin, uvToMm } from './uv'
-
-type Marker = { xMm: number; yMm: number; widthMm: number; heightMm: number }
+import type { Marker } from './blank-model'
 
 type Args = {
-  mesh: Mesh | null
+  selectHit: (e: ThreeEvent<PointerEvent>) => Mesh | null
+  isPrintable: (obj: unknown) => boolean
   template: { widthMm: number; heightMm: number }
   marker: Marker
   onMove: (next: Marker) => void
   setOrbitEnabled: (on: boolean) => void
 }
 
-/** Raycast → UV → template-mm drag on the printable surface (no Decal). */
-export function useSurfaceDrag({ mesh, template, marker, onMove, setOrbitEnabled }: Args) {
+/** Smooth UV drag — uses R3F event UV (old path), no window raycast. */
+export function useSurfaceDrag({
+  selectHit,
+  isPrintable,
+  template,
+  marker,
+  onMove,
+  setOrbitEnabled,
+}: Args) {
   const dragging = useRef(false)
+  const dragMesh = useRef<Mesh | null>(null)
   const markerRef = useRef(marker)
   markerRef.current = marker
   const { gl } = useThree()
@@ -27,6 +35,7 @@ export function useSurfaceDrag({ mesh, template, marker, onMove, setOrbitEnabled
     const end = () => {
       if (!dragging.current) return
       dragging.current = false
+      dragMesh.current = null
       setOrbitEnabled(true)
       gl.domElement.style.cursor = 'auto'
     }
@@ -38,36 +47,39 @@ export function useSurfaceDrag({ mesh, template, marker, onMove, setOrbitEnabled
     }
   }, [gl, setOrbitEnabled])
 
-  const placeFromEvent = (e: ThreeEvent<PointerEvent>) => {
-    if (!mesh || !e.uv) return
+  const place = (e: ThreeEvent<PointerEvent>, mesh: Mesh) => {
+    if (!e.uv || e.object !== mesh) return
     const { xMm, yMm } = uvToMm(e.uv.x, e.uv.y, template)
     const m = markerRef.current
-    const origin = clampLayerOrigin(
-      xMm - m.widthMm / 2,
-      yMm - m.heightMm / 2,
-      m.widthMm,
-      m.heightMm,
-      template,
-    )
-    onMove({ ...m, ...origin })
+    onMove({
+      ...m,
+      ...clampLayerOrigin(
+        xMm - m.widthMm / 2,
+        yMm - m.heightMm / 2,
+        m.widthMm,
+        m.heightMm,
+        template,
+      ),
+    })
   }
 
   return {
     onPointerDown: (e: ThreeEvent<PointerEvent>) => {
-      if (!mesh || e.object !== mesh) return
-      e.stopPropagation()
+      const hit = selectHit(e)
+      if (!hit) return
       dragging.current = true
+      dragMesh.current = hit
       setOrbitEnabled(false)
       gl.domElement.style.cursor = 'grabbing'
-      placeFromEvent(e)
+      place(e, hit)
     },
     onPointerMove: (e: ThreeEvent<PointerEvent>) => {
-      if (!dragging.current) return
+      if (!dragging.current || !dragMesh.current) return
       e.stopPropagation()
-      placeFromEvent(e)
+      place(e, dragMesh.current)
     },
-    onPointerOver: () => {
-      if (!dragging.current) gl.domElement.style.cursor = 'grab'
+    onPointerOver: (e: ThreeEvent<PointerEvent>) => {
+      if (!dragging.current && isPrintable(e.object)) gl.domElement.style.cursor = 'grab'
     },
     onPointerOut: () => {
       if (!dragging.current) gl.domElement.style.cursor = 'auto'

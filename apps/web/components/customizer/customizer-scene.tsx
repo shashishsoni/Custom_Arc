@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useCallback, useRef, useState, type ComponentRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import {
   ContactShadows,
@@ -25,9 +25,8 @@ type Props = {
   marker: Marker
   onMarkerChange: (m: Marker) => void
   onTextureReady?: (tex: DesignTexture) => void
-  /** Camera framing — prefer this over hardcoding inside the scene. */
+  onActiveZone?: (name: string | null) => void
   camera?: CustomizerCamera
-  /** Model placement in the scene. */
   model?: CustomizerModelPose
 }
 
@@ -56,12 +55,20 @@ export function CustomizerScene({
   marker,
   onMarkerChange,
   onTextureReady,
+  onActiveZone,
   camera: cameraProp,
   model: modelProp,
 }: Props) {
   const [orbit, setOrbit] = useState(true)
+  const controlsRef = useRef<ComponentRef<typeof OrbitControls>>(null)
   const cam = { ...DEFAULT_CAMERA, ...cameraProp }
   const pose = { ...DEFAULT_MODEL_POSE, ...modelProp }
+
+  const setOrbitEnabled = useCallback((on: boolean) => {
+    setOrbit(on)
+    const c = controlsRef.current
+    if (c) c.enabled = on
+  }, [])
 
   return (
     <Canvas
@@ -92,13 +99,15 @@ export function CustomizerScene({
             blank={blank}
             marker={marker}
             onMarkerChange={onMarkerChange}
-            setOrbitEnabled={setOrbit}
+            setOrbitEnabled={setOrbitEnabled}
             onTextureReady={onTextureReady}
+            onActiveZone={onActiveZone}
           />
         </group>
         <ContactShadows position={[0, -1.2, 0]} opacity={0.3} scale={8} blur={2.5} far={3} />
       </Suspense>
       <OrbitControls
+        ref={controlsRef}
         enabled={orbit}
         makeDefault
         enablePan={false}

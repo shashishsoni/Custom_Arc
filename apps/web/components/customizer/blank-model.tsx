@@ -1,16 +1,18 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
+import type { Mesh } from 'three'
 import type { Blank } from '@customarc/shared'
 import { createDesignTexture, type DesignTexture } from './design-texture'
 import {
-  bindPrintableTextures,
-  findPrintableMesh,
+  bindPrintableTexture,
   findPrintableMeshes,
   normalizeModel,
+  paintMugWhite,
 } from './printable'
+import { useActivePrintable } from './use-active-printable'
 import { useSurfaceDrag } from './use-surface-drag'
 
 export type Marker = { xMm: number; yMm: number; widthMm: number; heightMm: number }
@@ -21,6 +23,7 @@ type Props = {
   onMarkerChange: (m: Marker) => void
   setOrbitEnabled: (on: boolean) => void
   onTextureReady?: (tex: DesignTexture) => void
+  onActiveZone?: (name: string | null) => void
 }
 
 export function BlankModel({
@@ -29,47 +32,72 @@ export function BlankModel({
   onMarkerChange,
   setOrbitEnabled,
   onTextureReady,
+  onActiveZone,
 }: Props) {
   const { scene } = useGLTF(blank.template.modelUrl)
   const { invalidate } = useThree()
   const designRef = useRef<DesignTexture | null>(null)
+  const unbindRef = useRef<(() => void) | null>(null)
   const { widthMm, heightMm } = blank.template.printableAreaMm
 
   const root = useMemo(() => {
     const clone = scene.clone(true)
     normalizeModel(clone)
+    paintMugWhite(clone)
     return clone
   }, [scene])
 
   const meshes = useMemo(() => findPrintableMeshes(root), [root])
-  const mesh = useMemo(() => findPrintableMesh(root), [root])
+  const { active, selectHit } = useActivePrintable(meshes)
 
   useEffect(() => {
     const design = createDesignTexture(widthMm, heightMm)
     designRef.current = design
-    onTextureReady?.(design)
-    const unbind = bindPrintableTextures(meshes, design.texture)
     design.paint(marker)
-    invalidate()
+    onTextureReady?.(design)
     return () => {
-      unbind()
+      unbindRef.current?.()
+      unbindRef.current = null
       design.dispose()
       designRef.current = null
     }
-    // Bind once per model/template; marker paints in the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meshes, widthMm, heightMm, invalidate])
+  }, [widthMm, heightMm])
 
   useEffect(() => {
-    designRef.current?.paint(marker)
+    unbindRef.current?.()
+    unbindRef.current = null
+    const design = designRef.current
+    if (!design || !active) {
+      onActiveZone?.(null)
+      invalidate()
+      return
+    }
+    unbindRef.current = bindPrintableTexture(active, design.texture)
+    onActiveZone?.(active.name || null)
     invalidate()
-  }, [marker, invalidate])
+    return () => {
+      unbindRef.current?.()
+      unbindRef.current = null
+    }
+  }, [active, onActiveZone, invalidate])
+
+  // Paint canvas directly — avoids laggy React→effect→paint loop while dragging.
+  const onMove = useCallback(
+    (next: Marker) => {
+      designRef.current?.paint(next)
+      invalidate()
+      onMarkerChange(next)
+    },
+    [invalidate, onMarkerChange],
+  )
 
   const drag = useSurfaceDrag({
-    mesh,
+    selectHit,
+    isPrintable: (obj) => meshes.includes(obj as Mesh),
     template: { widthMm, heightMm },
     marker,
-    onMove: onMarkerChange,
+    onMove,
     setOrbitEnabled,
   })
 

@@ -1,7 +1,4 @@
-function cssVar(name: string, fallback: string) {
-  if (typeof document === 'undefined') return fallback
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
-}
+import { cssVar } from '@/lib/css-var'
 
 /** Dot-plate print preview — dots only (no cream fill, no edge stroke). */
 export function drawTestGrid(

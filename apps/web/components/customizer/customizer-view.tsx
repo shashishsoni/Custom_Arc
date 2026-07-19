@@ -10,10 +10,10 @@ import type { CustomizerCamera, CustomizerModelPose } from './view-config'
 function initialMarker(blank: Blank): Marker {
   const { widthMm, heightMm } = blank.template.printableAreaMm
   return {
-    xMm: widthMm * 0.35,
-    yMm: heightMm * 0.3,
-    widthMm: widthMm * 0.3,
-    heightMm: heightMm * 0.4,
+    xMm: widthMm * 0.38,
+    yMm: heightMm * 0.32,
+    widthMm: widthMm * 0.18,
+    heightMm: heightMm * 0.22,
   }
 }
 
@@ -26,6 +26,7 @@ type Props = {
 export function CustomizerView({ blank, camera, model }: Props) {
   const [marker, setMarker] = useState(() => initialMarker(blank))
   const [design, setDesign] = useState<DesignTexture | null>(null)
+  const [activeZone, setActiveZone] = useState<string | null>(null)
   const flatHost = useRef<HTMLDivElement>(null)
 
   const onTextureReady = useCallback((tex: DesignTexture) => setDesign(tex), [])
@@ -51,11 +52,12 @@ export function CustomizerView({ blank, camera, model }: Props) {
           marker={marker}
           onMarkerChange={setMarker}
           onTextureReady={onTextureReady}
+          onActiveZone={setActiveZone}
           camera={camera}
           model={model}
         />
         <p className="pointer-events-none absolute bottom-3 left-3 text-xs font-bold tracking-widest text-primary uppercase">
-          Drag on surface · orbit empty space
+          {activeZone ? `Active · ${activeZone}` : 'Click a print zone'} · orbit empty space
         </p>
       </div>
 
