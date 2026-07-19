@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getBlank } from '@/lib/api'
-import { Customizer } from '@/components/customizer'
-import { viewForSlug } from '@/components/customizer/view-config'
+import { Customizer, viewForSlug } from '@/modules/customizer'
 
 export const metadata = { title: 'Customize — CustomArc' }
 

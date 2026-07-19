@@ -1,10 +1,10 @@
-import { HomeHero } from '@/components/home-hero'
-import { CategoriesSection } from '@/components/categories'
-import { LookbookFlip } from '@/components/lookbook-flip'
-import { GenerationTrace } from '@/components/generation-trace'
-import { FeedbackColumns } from '@/components/feedback-columns'
-import { InviteArc } from '@/components/invite-arc'
-import { MugJourneyScroll } from '@/components/product-journey/mug-journey-scroll'
+import { HomeHero } from '@/modules/home-hero'
+import { CategoriesSection } from '@/modules/categories'
+import { LookbookFlip } from '@/modules/lookbook-flip'
+import { GenerationTrace } from '@/modules/generation-trace'
+import { FeedbackColumns } from '@/modules/feedback-columns'
+import { InviteArc } from '@/modules/invite-arc'
+import { MugJourneyScroll } from '@/modules/product-journey'
 
 export default async function HomePage() {
   return (

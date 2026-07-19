@@ -1,0 +1,1 @@
+export { MugJourneyScroll } from './components/mug-journey-scroll'
