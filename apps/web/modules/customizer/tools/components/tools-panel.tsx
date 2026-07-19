@@ -7,6 +7,7 @@ import { API_UPLOADS, apiUrl } from '@customarc/shared/constants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 import { makeImageLayer, makeTextLayer, patchTransform, updateLayer } from '../../design/design-doc'
 
 async function uploadDesignImage(
@@ -65,6 +66,11 @@ type Props = {
   onSelectLayer: (id: string | null) => void
 }
 
+const label = 'mb-2 text-[0.625rem] font-bold tracking-[0.14em] text-fg-muted uppercase'
+const panel = 'rounded border border-border bg-card p-3'
+const field = 'space-y-1.5'
+const control = 'min-h-10 rounded text-sm'
+
 export function ToolsPanel({ blank, doc, selectedLayerId, onDocChange, onSelectLayer }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('CustomArc')
@@ -98,72 +104,90 @@ export function ToolsPanel({ blank, doc, selectedLayerId, onDocChange, onSelectL
   }
 
   return (
-    <div className="space-y-4 rounded border border-border bg-card p-4">
-      <p className="text-xs font-bold tracking-widest text-primary uppercase">Tools</p>
+    <div className="space-y-3">
+      <section className={panel} aria-labelledby="tools-label">
+        <h2 id="tools-label" className={label}>
+          Tools
+        </h2>
 
-      <div className="space-y-2">
-        <Label htmlFor="bg">Background</Label>
-        <Input
-          id="bg"
-          type="color"
-          className="h-11 w-full max-w-[8rem] cursor-pointer p-1"
-          value={doc.background.color}
-          onChange={(e) =>
-            onDocChange({
-              ...doc,
-              background: { color: e.target.value as DesignDocument['background']['color'] },
-            })
-          }
-        />
-      </div>
+        <div className="space-y-3">
+          <div className={field}>
+            <Label htmlFor="bg" className="text-xs text-fg-muted">
+              Background
+            </Label>
+            <Input
+              id="bg"
+              type="color"
+              className="h-10 w-full cursor-pointer rounded p-1"
+              value={doc.background.color}
+              onChange={(e) =>
+                onDocChange({
+                  ...doc,
+                  background: { color: e.target.value as DesignDocument['background']['color'] },
+                })
+              }
+            />
+          </div>
 
-      <div className="space-y-2">
-        <Label>Image</Label>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={(e) => void addImage(e.target.files?.[0])}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          className="min-h-11 rounded"
-          disabled={busy}
-          onClick={() => fileRef.current?.click()}
-        >
-          {busy ? 'Uploading…' : 'Upload image'}
-        </Button>
-      </div>
+          <div className={field}>
+            <Label className="text-xs text-fg-muted">Image</Label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => void addImage(e.target.files?.[0])}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className={cn(control, 'w-full')}
+              disabled={busy}
+              onClick={() => fileRef.current?.click()}
+            >
+              {busy ? 'Uploading…' : 'Upload image'}
+            </Button>
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="text-layer">Text</Label>
-        <Input
-          id="text-layer"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="min-h-11 rounded"
-          maxLength={200}
-        />
-        <Button type="button" variant="outline" className="min-h-11 rounded" onClick={addText}>
-          Add text
-        </Button>
-      </div>
+          <div className={field}>
+            <Label htmlFor="text-layer" className="text-xs text-fg-muted">
+              Text
+            </Label>
+            <div className="flex flex-col gap-1.5">
+              <Input
+                id="text-layer"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                className={control}
+                maxLength={200}
+              />
+              <Button type="button" variant="outline" className={cn(control, 'w-full')} onClick={addText}>
+                Add text
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+        <p className="mt-3 text-[0.6875rem] leading-snug text-fg-muted">
+          Click a print zone, then drag to place the selected layer.
+        </p>
+      </section>
 
       {doc.layers.length > 0 && (
-        <div className="space-y-2">
-          <Label>Layers</Label>
+        <section className={panel} aria-label="Layers">
+          <p className={label}>Layers</p>
           <ul className="space-y-1">
             {doc.layers.map((layer) => (
               <li key={layer.id}>
                 <button
                   type="button"
-                  className={`min-h-11 w-full rounded border px-3 text-left text-sm ${
+                  className={cn(
+                    'min-h-10 w-full rounded border px-2.5 text-left text-xs transition-colors',
                     layer.id === selectedLayerId
-                      ? 'border-primary bg-[color-mix(in_srgb,var(--primary)_12%,var(--card))] text-primary'
-                      : 'border-border text-fg'
-                  }`}
+                      ? 'border-primary bg-[color-mix(in_srgb,var(--primary)_10%,var(--card))] font-medium text-primary'
+                      : 'border-border text-fg hover:bg-[color-mix(in_srgb,var(--border)_25%,var(--card))]',
+                  )}
                   onClick={() => onSelectLayer(layer.id)}
                 >
                   {layerLabel(layer)}
@@ -171,58 +195,57 @@ export function ToolsPanel({ blank, doc, selectedLayerId, onDocChange, onSelectL
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
 
       {selected && (
-        <div className="grid grid-cols-2 gap-3">
-          <NumberField
-            label="Width mm"
-            value={selected.transform.widthMm}
-            onChange={(widthMm) =>
-              onDocChange(patchTransform(doc, selected.id, { widthMm: Math.max(5, widthMm) }))
-            }
-          />
-          <NumberField
-            label="Height mm"
-            value={selected.transform.heightMm}
-            onChange={(heightMm) =>
-              onDocChange(patchTransform(doc, selected.id, { heightMm: Math.max(5, heightMm) }))
-            }
-          />
-          <NumberField
-            label="Rotate °"
-            value={selected.transform.rotationDeg}
-            onChange={(rotationDeg) =>
-              onDocChange(patchTransform(doc, selected.id, { rotationDeg }))
-            }
-          />
-          {selected.type === 'text' && (
-            <div className="col-span-2 space-y-2">
-              <Label htmlFor="edit-text">Edit text</Label>
-              <Input
-                id="edit-text"
-                className="min-h-11 rounded"
-                value={selected.text}
-                onChange={(e) => {
-                  const next = e.target.value || ' '
-                  onDocChange(
-                    updateLayer(doc, selected.id, (layer) =>
-                      layer.type === 'text' ? { ...layer, text: next } : layer,
-                    ),
-                  )
-                }}
-              />
-            </div>
-          )}
-        </div>
+        <section className={panel} aria-label="Layer transform">
+          <p className={label}>Adjust</p>
+          <div className="grid grid-cols-2 gap-2">
+            <NumberField
+              label="Width mm"
+              value={selected.transform.widthMm}
+              onChange={(widthMm) =>
+                onDocChange(patchTransform(doc, selected.id, { widthMm: Math.max(5, widthMm) }))
+              }
+            />
+            <NumberField
+              label="Height mm"
+              value={selected.transform.heightMm}
+              onChange={(heightMm) =>
+                onDocChange(patchTransform(doc, selected.id, { heightMm: Math.max(5, heightMm) }))
+              }
+            />
+            <NumberField
+              label="Rotate °"
+              value={selected.transform.rotationDeg}
+              onChange={(rotationDeg) =>
+                onDocChange(patchTransform(doc, selected.id, { rotationDeg }))
+              }
+            />
+            {selected.type === 'text' && (
+              <div className="col-span-2 space-y-1.5">
+                <Label htmlFor="edit-text" className="text-xs text-fg-muted">
+                  Edit text
+                </Label>
+                <Input
+                  id="edit-text"
+                  className={control}
+                  value={selected.text}
+                  onChange={(e) => {
+                    const next = e.target.value || ' '
+                    onDocChange(
+                      updateLayer(doc, selected.id, (layer) =>
+                        layer.type === 'text' ? { ...layer, text: next } : layer,
+                      ),
+                    )
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </section>
       )}
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <p className="text-sm text-fg-muted">
-        Drag on an active print zone to place the selected layer. Sign in for private server uploads;
-        signed-out uses a local preview.
-      </p>
     </div>
   )
 }
@@ -242,11 +265,11 @@ function NumberField({
   onChange: (n: number) => void
 }) {
   return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
+    <div className="space-y-1.5">
+      <Label className="text-xs text-fg-muted">{label}</Label>
       <Input
         type="number"
-        className="min-h-11 rounded"
+        className="min-h-10 rounded text-sm"
         value={Number(value.toFixed(1))}
         onChange={(e) => onChange(Number(e.target.value))}
       />

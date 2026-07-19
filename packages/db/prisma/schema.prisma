@@ -285,21 +285,26 @@ enum OrderState {
 }
 
 model Order {
-  id            String      @id @default(cuid())
-  userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  state         OrderState  @default(designing)
-  totalMinor    Int
-  currency      String      @default("INR")
-  partner       String?
-  partnerOrderId String?
-  items         OrderItem[]
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  state            OrderState  @default(designing)
+  totalMinor       Int
+  currency         String      @default("INR")
+  partner          String?
+  partnerOrderId   String?
+  /** Razorpay order id (or `mock_<orderId>` when keys unset). */
+  razorpayOrderId  String?
+  razorpayPaymentId String?
+
+  items            OrderItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([state])
+  @@index([razorpayOrderId])
   @@map("orders")
 }
 

@@ -18,3 +18,5 @@ export const forbidden = (message = 'Forbidden'): ApiError => new ApiError(403, 
 export const notFound = (message = 'Not found'): ApiError => new ApiError(404, message)
 export const conflict = (message: string, details?: unknown): ApiError =>
   new ApiError(409, message, details)
+export const internalServerError = (message = 'Internal server error', details?: unknown): ApiError =>
+  new ApiError(500, message, details)

@@ -14,15 +14,8 @@ export default async function CustomizePage({ params }: { params: Promise<{ slug
   }
 
   return (
-    <main id="main" className="py-10 pb-16">
-      <h2 className="mb-2 font-heading text-[clamp(2.5rem,6vw,4.5rem)] leading-[0.95] font-semibold tracking-tight text-fg">
-        {blank.name}
-      </h2>
-      <p className="mb-8 text-lg leading-relaxed text-fg-muted md:text-xl">
-        Printable area {blank.template.printableAreaMm.widthMm}×
-        {blank.template.printableAreaMm.heightMm}mm ·{' '}
-        {blank.template.printPixels.widthPx}×{blank.template.printPixels.heightPx}px @300 DPI
-      </p>
+    <main id="main" className="h-full min-h-0">
+      <h1 className="sr-only">{blank.name} customizer</h1>
       <Customizer blank={blank} />
     </main>
   )

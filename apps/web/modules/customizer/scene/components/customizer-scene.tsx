@@ -80,15 +80,16 @@ export function CustomizerScene({
       className="absolute inset-0 touch-none"
       dpr={[1, 1.5]}
       gl={{
+        alpha: true,
         antialias: true,
         toneMapping: THREE.ACESFilmicToneMapping,
         outputColorSpace: THREE.SRGBColorSpace,
       }}
       onCreated={({ gl }) => {
+        gl.setClearColor(0x000000, 0)
         gl.domElement.style.touchAction = 'none'
       }}
     >
-      <color attach="background" args={['#f7f3ef']} />
       <PerspectiveCamera
         makeDefault
         fov={cam.fov}

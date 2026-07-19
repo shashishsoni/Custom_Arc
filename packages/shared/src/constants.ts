@@ -57,6 +57,10 @@ export const CLOUDFLARE_AI_TOKEN = optional('CLOUDFLARE_AI_TOKEN')
 export const RAZORPAY_KEY_ID = optional('RAZORPAY_KEY_ID')
 export const RAZORPAY_KEY_SECRET = optional('RAZORPAY_KEY_SECRET')
 export const RAZORPAY_WEBHOOK_SECRET = optional('RAZORPAY_WEBHOOK_SECRET')
+/** True when Razorpay keys are configured; otherwise checkout uses mock pay. */
+export const RAZORPAY_ENABLED = Boolean(RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET)
+/** Razorpay Standard Checkout minimum order amount (paise). */
+export const RAZORPAY_MIN_AMOUNT_PAISE = 100
 
 export const PRINT_PARTNER = optional('PRINT_PARTNER', 'qikink')
 export const PRINT_PARTNER_API_KEY = optional('PRINT_PARTNER_API_KEY')
@@ -89,6 +93,9 @@ export const API_CREDITS_SPEND = '/credits/spend'
 export const API_LEADS = '/leads'
 export const API_LEADS_BULK = '/leads/bulk'
 export const API_AUTH = '/api/auth'
+export const API_ORDERS = '/orders'
+export const API_BILLING = '/billing'
+export const API_BILLING_WEBHOOK = '/billing/webhook'
 
 /** Absolute URL for an API path. */
 export function apiUrl(path: string): string {

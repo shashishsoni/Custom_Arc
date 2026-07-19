@@ -9,12 +9,15 @@ import { AuthModal } from '@/modules/auth-modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 type Props = {
   blankSlug: string
   doc: DesignDocument
   designId: string | null
   onSaved: (id: string) => void
+  /** Horizontal dock control for the studio bottom bar. */
+  className?: string
 }
 
 function hasLocalUploads(doc: DesignDocument) {
@@ -55,7 +58,7 @@ async function postOrPatchDesign(input: {
   return { kind: 'ok' as const, design: savedDesignSchema.parse(body.data) }
 }
 
-export function SaveDesignBar({ blankSlug, doc, designId, onSaved }: Props) {
+export function SaveDesignBar({ blankSlug, doc, designId, onSaved, className }: Props) {
   const { data: session } = authClient.useSession()
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
@@ -101,35 +104,30 @@ export function SaveDesignBar({ blankSlug, doc, designId, onSaved }: Props) {
   }
 
   return (
-    <div className="space-y-3 rounded border border-border bg-card p-4">
-      <p className="text-xs font-bold tracking-widest text-primary uppercase">Save</p>
-
-      <div className="space-y-2">
-        <Label htmlFor="design-name">Name (optional)</Label>
-        <Input
-          id="design-name"
-          className="min-h-11 rounded"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={blankSlug}
-          maxLength={80}
-        />
-      </div>
-
+    <div className={cn('flex min-w-0 flex-wrap items-center gap-2', className)}>
+      <Label htmlFor="design-name" className="sr-only">
+        Name (optional)
+      </Label>
+      <Input
+        id="design-name"
+        className="h-10 min-h-10 w-[min(100%,12rem)] rounded"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={blankSlug}
+        maxLength={80}
+      />
       <Button
         type="button"
-        className="min-h-11 w-full rounded"
+        variant="outline"
+        className="h-10 min-h-10 rounded border-[color-mix(in_srgb,var(--primary)_35%,var(--border))] px-4 text-sm font-semibold text-primary hover:bg-[color-mix(in_srgb,var(--primary)_8%,var(--bg-card))]"
         disabled={busy}
         onClick={() => void onSave()}
       >
         {busy ? 'Saving…' : designId ? 'Update design' : 'Save design'}
       </Button>
-
-      {ok && <p className="text-sm text-fg-muted">{ok}</p>}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      {!session?.user && (
-        <p className="text-sm text-fg-muted">Sign in required to save privately.</p>
-      )}
+      {ok && <span className="text-xs text-fg-muted">{ok}</span>}
+      {error && <span className="text-xs text-destructive">{error}</span>}
+      {!session?.user && <span className="text-xs text-fg-muted">Sign in to save</span>}
 
       <AuthModal
         open={authOpen}

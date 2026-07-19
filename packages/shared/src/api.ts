@@ -46,3 +46,52 @@ export const savedDesignSchema = z.object({
   name: z.string().nullable(),
 })
 export type SavedDesign = z.infer<typeof savedDesignSchema>
+
+export const orderStateSchema = z.enum([
+  'designing',
+  'paid',
+  'in_production',
+  'shipped',
+  'delivered',
+  'cancelled',
+])
+export type OrderState = z.infer<typeof orderStateSchema>
+
+/** POST /orders — create order for a saved design (no AI). */
+export const createOrderRequestSchema = z.object({
+  designId: z.string().min(1),
+  blankVariantId: z.string().min(1),
+})
+export type CreateOrderRequest = z.infer<typeof createOrderRequestSchema>
+
+export const orderSummarySchema = z.object({
+  id: z.string().min(1),
+  state: orderStateSchema,
+  totalMinor: z.number().int().nonnegative(),
+  currency: z.string().min(1),
+  razorpayOrderId: z.string().nullable(),
+})
+export type OrderSummary = z.infer<typeof orderSummarySchema>
+
+/** POST /orders/:id/checkout */
+export const checkoutSessionSchema = z.object({
+  orderId: z.string().min(1),
+  mode: z.enum(['razorpay', 'mock']),
+  amountMinor: z.number().int().positive(),
+  currency: z.string().min(1),
+  razorpayOrderId: z.string().min(1),
+  razorpayKeyId: z.string().optional(),
+})
+export type CheckoutSession = z.infer<typeof checkoutSessionSchema>
+
+/** POST /orders/:id/confirm — Razorpay success payload or mock. */
+export const confirmPaymentRequestSchema = z.discriminatedUnion('mode', [
+  z.object({
+    mode: z.literal('razorpay'),
+    razorpayOrderId: z.string().min(1),
+    razorpayPaymentId: z.string().min(1),
+    razorpaySignature: z.string().min(1),
+  }),
+  z.object({ mode: z.literal('mock') }),
+])
+export type ConfirmPaymentRequest = z.infer<typeof confirmPaymentRequestSchema>

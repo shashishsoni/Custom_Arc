@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { buttonVariants } from '@/components/ui/button'
 import { tryR2MediaUrl } from '@/lib/r2'
 import { cn } from '@/lib/utils'
+import { StudioStage, STUDIO_STAGE_BG } from '@/modules/customizer'
 
 const HeroProductsScene = dynamic(
   () => import('./hero-products-scene').then((m) => m.HeroProductsScene),
@@ -49,8 +50,8 @@ export function HomeHero() {
       className="relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_60%,var(--bg))_0%,var(--bg)_50%,color-mix(in_srgb,var(--accent-warm)_80%,var(--bg))_100%)]"
       aria-labelledby="hero-title"
     >
-      <div className="mx-auto flex min-h-[calc(100dvh-var(--header-h))] w-full max-w-7xl flex-col items-center px-4 pt-8 pb-[clamp(5.25rem,10vw,9.5rem)] md:px-6 md:pt-10">
-        <div className="relative z-10 flex w-full max-w-2xl flex-col items-center pb-[clamp(3.4rem,7vw,5.75rem)] text-center">
+      <div className="mx-auto flex min-h-[calc(100dvh-var(--header-h))] w-full max-w-7xl flex-col items-center px-4 pt-8 pb-[clamp(5.25rem,10vw,9.5rem)] md:px-6 md:pt-15">
+        <div className="relative z-10 flex w-full max-w-2xl flex-col items-center pb-[clamp(3.4rem,7vw,3.74rem)] text-center">
           <h1
             id="hero-title"
             className="font-heading max-w-[12ch] text-[clamp(2.75rem,7vw,5.5rem)] leading-[0.9] font-semibold tracking-tight text-fg"
@@ -86,14 +87,19 @@ export function HomeHero() {
         <div className="relative h-[42vh] min-h-80 w-full max-w-4xl flex-1 md:h-[58vh] md:min-h-[28rem]">
           <HeroSideCard
             videoSrc={promoVideoSrc}
-            className="right-[calc(100%+1.5rem)] rotate-6"
+            className="right-[calc(100%+1.5rem)] rotate-8"
           />
           <HeroSideCard
             videoSrc={promoVideoSrc}
-            className="left-[calc(100%+1.5rem)] -rotate-6"
+            className="left-[calc(100%+1.5rem)] -rotate-8"
           />
-          <HeroProductsScene />
-          <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 text-xs tracking-wide text-fg-muted">
+          <StudioStage
+            className="absolute inset-0 border border-border"
+            aria-label="Interactive 3D product stage"
+          >
+            <HeroProductsScene />
+          </StudioStage>
+          <p className="pointer-events-none absolute bottom-4 left-1/2 z-[1] -translate-x-1/2 text-xs tracking-wide text-fg-muted">
             Drag to explore · 3D live
           </p>
         </div>

@@ -1,13 +1,12 @@
-import { ApiError } from '../../errors.ts'
+import type { CheckoutSession, ConfirmPaymentRequest, OrderSummary } from '@customarc/shared'
+import { badRequest, conflict, forbidden, notFound } from '../../errors.ts'
+import { billingService } from '../billing/service.ts'
+import { designerService } from '../designer/service.ts'
+import { ordersRepo, type OrderRow } from './repo.ts'
 
-/**
- * Order state machine (spec §4, issue 16). Transitions validated server-side.
- *   designing → paid → in_production → shipped → delivered
- *   designing|paid → cancelled
- */
-export type OrderState = 'designing' | 'paid' | 'in_production' | 'shipped' | 'delivered' | 'cancelled'
+export type OrderState = OrderSummary['state']
 
-const LEGAL_TRANSITIONS: Record<OrderState, OrderState[]> = {
+const LEGAL: Record<OrderState, OrderState[]> = {
   designing: ['paid', 'cancelled'],
   paid: ['in_production', 'cancelled'],
   in_production: ['shipped'],
@@ -17,18 +16,117 @@ const LEGAL_TRANSITIONS: Record<OrderState, OrderState[]> = {
 }
 
 export function assertTransition(from: OrderState, to: OrderState): void {
-  if (!LEGAL_TRANSITIONS[from].includes(to)) {
-    throw new ApiError(409, `Illegal order transition: ${from} → ${to}`)
+  if (!LEGAL[from].includes(to)) {
+    throw conflict(`Illegal order transition: ${from} → ${to}`)
   }
 }
 
-/** Full order lifecycle is implemented in issues 14, 16, 18. */
-export class OrderService {
-  async createFromCheckout(_input: unknown): Promise<never> {
-    throw new ApiError(501, 'Order checkout not implemented (issue 14/16)')
+function toSummary(row: OrderRow): OrderSummary {
+  return {
+    id: row.id,
+    state: row.state,
+    totalMinor: row.totalMinor,
+    currency: row.currency,
+    razorpayOrderId: row.razorpayOrderId,
   }
-  async transition(_orderId: string, _to: OrderState): Promise<never> {
-    throw new ApiError(501, 'Order transitions not implemented (issue 16/18)')
+}
+
+/** Checkout for a saved design (issue 14/16). AI generation is not required. */
+export class OrderService {
+  constructor(
+    private readonly repo = ordersRepo,
+    private readonly billing = billingService,
+    private readonly designs = designerService,
+  ) {}
+
+  async createFromCheckout(input: {
+    userId: string
+    designId: string
+    blankVariantId: string
+  }): Promise<OrderSummary> {
+    const design = await this.designs.getByIdForUser(input.designId, input.userId)
+    const variant = await this.repo.getVariant(input.blankVariantId)
+    if (!variant || !variant.isActive) throw notFound('Blank variant not found')
+    if (variant.blankId !== design.blankId) {
+      throw badRequest('Variant does not belong to this design’s blank')
+    }
+
+    const row = await this.repo.create({
+      userId: input.userId,
+      designId: input.designId,
+      blankVariantId: input.blankVariantId,
+      unitPriceMinor: variant.priceMinor,
+      totalMinor: variant.priceMinor,
+      currency: variant.currency,
+    })
+    return toSummary(row)
+  }
+
+  async getForUser(orderId: string, userId: string): Promise<OrderSummary> {
+    return toSummary(await this.requireOwned(orderId, userId))
+  }
+
+  async startCheckout(orderId: string, userId: string): Promise<CheckoutSession> {
+    const order = await this.requireOwned(orderId, userId)
+    if (order.state !== 'designing') throw badRequest('Order is not awaiting payment')
+
+    const session = await this.billing.createCheckoutSession({
+      orderId: order.id,
+      amountMinor: order.totalMinor,
+      currency: order.currency,
+    })
+
+    await this.repo.setRazorpayOrderId(order.id, session.razorpayOrderId)
+
+    return {
+      orderId: order.id,
+      mode: session.mode,
+      amountMinor: order.totalMinor,
+      currency: order.currency,
+      razorpayOrderId: session.razorpayOrderId,
+      ...(session.razorpayKeyId ? { razorpayKeyId: session.razorpayKeyId } : {}),
+    }
+  }
+
+  async confirmPayment(
+    orderId: string,
+    userId: string,
+    body: ConfirmPaymentRequest,
+  ): Promise<OrderSummary> {
+    const order = await this.requireOwned(orderId, userId)
+    if (order.state === 'paid') return toSummary(order)
+    if (order.state !== 'designing') throw badRequest('Order cannot be paid in this state')
+
+    if (body.mode === 'mock') {
+      if (!order.razorpayOrderId?.startsWith('mock_')) {
+        throw badRequest('Mock confirm only allowed for mock checkout sessions')
+      }
+      assertTransition(order.state, 'paid')
+      return toSummary(await this.repo.markPaid(order.id, `mock_pay_${order.id}`))
+    }
+
+    if (order.razorpayOrderId !== body.razorpayOrderId) {
+      throw badRequest('Razorpay order id mismatch')
+    }
+    if (
+      !this.billing.verifyPaymentSignature({
+        razorpayOrderId: body.razorpayOrderId,
+        razorpayPaymentId: body.razorpayPaymentId,
+        razorpaySignature: body.razorpaySignature,
+      })
+    ) {
+      throw badRequest('Invalid payment signature')
+    }
+
+    assertTransition(order.state, 'paid')
+    return toSummary(await this.repo.markPaid(order.id, body.razorpayPaymentId))
+  }
+
+  private async requireOwned(orderId: string, userId: string): Promise<OrderRow> {
+    const order = await this.repo.getById(orderId)
+    if (!order) throw notFound('Order not found')
+    if (order.userId !== userId) throw forbidden()
+    return order
   }
 }
 

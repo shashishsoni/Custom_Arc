@@ -10,6 +10,8 @@ import { designerRoutes } from './modules/designer/routes.ts'
 import { creditsRoutes } from './modules/credits/routes.ts'
 import { leadRoutes } from './modules/leads/routes.ts'
 import { uploadRoutes } from './modules/uploads/routes.ts'
+import { orderRoutes } from './modules/orders/routes.ts'
+import { billingRoutes } from './modules/billing/routes.ts'
 
 /** The composed API. Routes are thin adapters over module services; errors map to one envelope. */
 export const app = new Elysia()
@@ -27,6 +29,8 @@ export const app = new Elysia()
   .use(creditsRoutes)
   .use(leadRoutes)
   .use(uploadRoutes)
+  .use(orderRoutes)
+  .use(billingRoutes)
   .get(API_HEALTH, () => ({ status: 'ok', service: 'customarc-api', env: LOG_LEVEL }))
   .onError(({ code, error, set }) => {
     if (error instanceof ApiError) {

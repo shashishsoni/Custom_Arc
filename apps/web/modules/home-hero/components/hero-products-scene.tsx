@@ -2,9 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { mountHeroScene } from '@/lib/hero-scene'
+import { cn } from '@/lib/utils'
 
-/** Zero-prop React shell — scene lifecycle lives in `lib/hero-scene`. */
-export function HeroProductsScene() {
+type Props = {
+  className?: string
+}
+
+/** Scene host — stage tilt / canvas fill live on StudioStage. */
+export function HeroProductsScene({ className }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
@@ -21,7 +26,7 @@ export function HeroProductsScene() {
     <>
       <div
         ref={hostRef}
-        className="absolute inset-0 z-0 origin-center border border-white bg-scene-bg bg-[radial-gradient(ellipse_at_center,var(--scene-bg)_0%,var(--scene-warm)_100%)] [transform:perspective(1200px)_rotateX(20deg)] [&_canvas]:block [&_canvas]:size-full [&_canvas]:touch-none [&_canvas]:outline-none"
+        className={cn('absolute inset-0', className)}
         role="img"
         aria-label="Interactive 3D CustomArc mug and phone case"
       />
