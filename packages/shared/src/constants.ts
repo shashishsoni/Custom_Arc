@@ -65,6 +65,16 @@ export const RAZORPAY_MIN_AMOUNT_PAISE = 100
 export const PRINT_PARTNER = optional('PRINT_PARTNER', 'qikink')
 export const PRINT_PARTNER_API_KEY = optional('PRINT_PARTNER_API_KEY')
 
+/** Auto-approve uploads when true (default). Set false + reviewer ids for manual gate. */
+export const MODERATION_AUTO_APPROVE = optional('MODERATION_AUTO_APPROVE', 'true') === 'true'
+/** Comma-separated user ids allowed to POST /moderation/flags/:id/review. */
+export const MODERATION_REVIEWER_IDS = optional('MODERATION_REVIEWER_IDS')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+export const OPENAI_API_KEY = optional('OPENAI_API_KEY')
+
+
 export const SENTRY_DSN = optional('SENTRY_DSN')
 
 /** API boot: throw if required server vars are missing. */
@@ -97,6 +107,11 @@ export const API_ORDERS = '/orders'
 export const API_BILLING = '/billing'
 export const API_BILLING_WEBHOOK = '/billing/webhook'
 export const API_PRINT_FILES = '/print-files'
+export const API_MODERATION = '/moderation'
+
+/** Sandbox partner when API key unset (issue 17 first proof). */
+export const PRINT_PARTNER_SANDBOX = !PRINT_PARTNER_API_KEY
+
 
 /** Absolute URL for an API path. */
 export function apiUrl(path: string): string {

@@ -2,6 +2,7 @@ import { Elysia, t } from 'elysia'
 import { confirmPaymentRequestSchema, ok } from '@customarc/shared'
 import { API_ORDERS } from '@customarc/shared/constants'
 import { withAuth } from '../auth/plugin.ts'
+import { fulfillmentService } from '../fulfillment/service.ts'
 import { printFilesService } from '../print-files/service.ts'
 import { orderService } from './service.ts'
 
@@ -41,4 +42,7 @@ export const orderRoutes = new Elysia({ prefix: API_ORDERS })
   )
   .post('/:id/print-files', async ({ params, user }) =>
     ok(await printFilesService.generateForOwnedOrder(params.id, user.id)),
+  )
+  .post('/:id/fulfill', async ({ params, user }) =>
+    ok(await fulfillmentService.submitForOwnedOrder(params.id, user.id)),
   )

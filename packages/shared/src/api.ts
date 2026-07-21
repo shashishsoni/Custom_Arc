@@ -70,8 +70,20 @@ export const orderSummarySchema = z.object({
   totalMinor: z.number().int().nonnegative(),
   currency: z.string().min(1),
   razorpayOrderId: z.string().nullable(),
+  partner: z.string().nullable().optional(),
+  partnerOrderId: z.string().nullable().optional(),
 })
 export type OrderSummary = z.infer<typeof orderSummarySchema>
+
+/** POST /orders/:id/fulfill — partner submit result */
+export const fulfillmentSummarySchema = z.object({
+  orderId: z.string().min(1),
+  state: z.string().min(1),
+  partner: z.string().min(1),
+  partnerOrderId: z.string().min(1),
+  mode: z.enum(['sandbox', 'live']),
+})
+export type FulfillmentSummary = z.infer<typeof fulfillmentSummarySchema>
 
 /** POST /orders/:id/checkout */
 export const checkoutSessionSchema = z.object({
@@ -107,3 +119,12 @@ export const printFileSummarySchema = z.object({
   validated: z.boolean(),
 })
 export type PrintFileSummary = z.infer<typeof printFileSummarySchema>
+
+/** GET /moderation/designs/:id/gate */
+export const printGateResultSchema = z.object({
+  ok: z.boolean(),
+  designId: z.string().min(1),
+  reasons: z.array(z.string()),
+})
+export type PrintGateResult = z.infer<typeof printGateResultSchema>
+

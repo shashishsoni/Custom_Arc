@@ -7,6 +7,7 @@ import { uploadsRepo } from '../uploads/repo.ts'
 import { putUploadObject, readUploadObject } from '../uploads/storage.ts'
 import { loadDrawableImage, PRINT_DPI, renderPrintPng } from './render.ts'
 import { printFilesRepo, type OrderItemForPrint, type PrintFileRow } from './repo.ts'
+import { moderationService } from '../moderation/service.ts'
 
 const PRINT_ROOT = 'CustomArc-Local/printfiles'
 
@@ -65,6 +66,8 @@ export class PrintFilesService {
   }
 
   private async generateForItem(item: OrderItemForPrint): Promise<PrintFileSummary> {
+    await moderationService.assertCanPrint(item.designId)
+
     const doc = parseDesignDocument(item.design.document) as DesignDocument
     const template = blankTemplateSpecSchema.parse(item.design.blank.template)
     const images = await loadDesignImages(doc)

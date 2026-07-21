@@ -4,7 +4,8 @@ import { API_BILLING } from '@customarc/shared/constants'
 import { badRequest } from '../../errors.ts'
 import { billingService } from './service.ts'
 import { ordersRepo } from '../orders/repo.ts'
-import { assertTransition, orderService } from '../orders/service.ts'
+import { orderService } from '../orders/service.ts'
+import { assertTransition } from '../orders/transitions.ts'
 
 /**
  * Razorpay webhooks are a settlement source of truth for async payment events.

@@ -1,27 +1,15 @@
 import type { CheckoutSession, ConfirmPaymentRequest, OrderSummary } from '@customarc/shared'
-import { badRequest, conflict, forbidden, notFound } from '../../errors.ts'
+import { badRequest, forbidden, notFound } from '../../errors.ts'
 import { billingService } from '../billing/service.ts'
 import { designerService } from '../designer/service.ts'
+import { fulfillmentService } from '../fulfillment/service.ts'
 import { printFilesService } from '../print-files/service.ts'
 import { logger } from '../../logger.ts'
 import { ordersRepo, type OrderRow } from './repo.ts'
+import { assertTransition } from './transitions.ts'
 
-export type OrderState = OrderSummary['state']
-
-const LEGAL: Record<OrderState, OrderState[]> = {
-  designing: ['paid', 'cancelled'],
-  paid: ['in_production', 'cancelled'],
-  in_production: ['shipped'],
-  shipped: ['delivered'],
-  delivered: [],
-  cancelled: [],
-}
-
-export function assertTransition(from: OrderState, to: OrderState): void {
-  if (!LEGAL[from].includes(to)) {
-    throw conflict(`Illegal order transition: ${from} → ${to}`)
-  }
-}
+export type { OrderState } from './transitions.ts'
+export { assertTransition } from './transitions.ts'
 
 function toSummary(row: OrderRow): OrderSummary {
   return {
@@ -30,6 +18,8 @@ function toSummary(row: OrderRow): OrderSummary {
     totalMinor: row.totalMinor,
     currency: row.currency,
     razorpayOrderId: row.razorpayOrderId,
+    partner: row.partner,
+    partnerOrderId: row.partnerOrderId,
   }
 }
 
@@ -40,6 +30,7 @@ export class OrderService {
     private readonly billing = billingService,
     private readonly designs = designerService,
     private readonly printFiles = printFilesService,
+    private readonly fulfillment = fulfillmentService,
   ) {}
 
   async createFromCheckout(input: {
@@ -97,7 +88,7 @@ export class OrderService {
     body: ConfirmPaymentRequest,
   ): Promise<OrderSummary> {
     const order = await this.requireOwned(orderId, userId)
-    if (order.state === 'paid') return toSummary(order)
+    if (order.state === 'paid' || order.state === 'in_production') return toSummary(order)
     if (order.state !== 'designing') throw badRequest('Order cannot be paid in this state')
 
     if (body.mode === 'mock') {
@@ -107,7 +98,7 @@ export class OrderService {
       assertTransition(order.state, 'paid')
       const paid = await this.repo.markPaid(order.id, `mock_pay_${order.id}`)
       await this.afterPaid(paid.id)
-      return toSummary(paid)
+      return toSummary((await this.repo.getById(paid.id))!)
     }
 
     if (order.razorpayOrderId !== body.razorpayOrderId) {
@@ -126,15 +117,16 @@ export class OrderService {
     assertTransition(order.state, 'paid')
     const paid = await this.repo.markPaid(order.id, body.razorpayPaymentId)
     await this.afterPaid(paid.id)
-    return toSummary(paid)
+    return toSummary((await this.repo.getById(paid.id))!)
   }
 
-  /** Fire-and-forget safe: payment already succeeded. */
+  /** Print file → partner submit. Errors are logged; payment stays succeeded. */
   async afterPaid(orderId: string): Promise<void> {
     try {
       await this.printFiles.generateForOrder(orderId)
+      await this.fulfillment.submitForOrder(orderId)
     } catch (error) {
-      logger.error('print file generation failed after payment', error, { orderId })
+      logger.error('post-payment fulfillment failed', error, { orderId })
     }
   }
 

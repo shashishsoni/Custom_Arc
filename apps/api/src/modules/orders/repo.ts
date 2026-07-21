@@ -7,6 +7,8 @@ export type OrderRow = {
   state: OrderState
   totalMinor: number
   currency: string
+  partner: string | null
+  partnerOrderId: string | null
   razorpayOrderId: string | null
   razorpayPaymentId: string | null
   createdAt: Date

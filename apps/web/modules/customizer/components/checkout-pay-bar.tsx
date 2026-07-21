@@ -6,10 +6,11 @@ import {
   checkoutSessionSchema,
   orderSummarySchema,
   printFileSummarySchema,
+  printGateResultSchema,
   type CheckoutSession,
   type PrintFileSummary,
 } from '@customarc/shared'
-import { API_ORDERS, API_PRINT_FILES, apiUrl } from '@customarc/shared/constants'
+import { API_MODERATION, API_ORDERS, API_PRINT_FILES, apiUrl } from '@customarc/shared/constants'
 import { authClient } from '@/lib/auth-client'
 import { AuthModal } from '@/modules/auth-modal'
 import { Button } from '@/components/ui/button'
@@ -75,6 +76,7 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [okMsg, setOkMsg] = useState<string | null>(null)
   const [printFiles, setPrintFiles] = useState<PrintFileSummary[]>([])
+  const [fulfillMsg, setFulfillMsg] = useState<string | null>(null)
   const [authOpen, setAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in')
 
@@ -84,6 +86,7 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
   const onPay = async () => {
     setError(null)
     setOkMsg(null)
+    setFulfillMsg(null)
     if (!session?.user) {
       setAuthOpen(true)
       return
@@ -99,6 +102,20 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
 
     setBusy(true)
     try {
+      const gate = await readOk(
+        await fetch(apiUrl(`${API_MODERATION}/designs/${designId}/gate`), {
+          credentials: 'include',
+        }),
+        printGateResultSchema.parse,
+      )
+      if (!gate.ok) {
+        throw new Error(
+          gate.reasons[0]
+            ? `Moderation blocked: ${gate.reasons[0]}`
+            : 'Design failed moderation check',
+        )
+      }
+
       const order = await readOk(
         await fetch(apiUrl(API_ORDERS), {
           method: 'POST',
@@ -129,12 +146,18 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
         )
         setOkMsg(`Paid (mock) · ${formatMoney(paid.totalMinor, paid.currency)}`)
         setPrintFiles(await listPrintFiles(order.id))
+        setFulfillMsg(partnerLine(paid))
         return
       }
 
       await openRazorpay(checkout)
+      const paid = await readOk(
+        await fetch(apiUrl(`${API_ORDERS}/${order.id}`), { credentials: 'include' }),
+        orderSummarySchema.parse,
+      )
       setOkMsg(`Paid · ${formatMoney(checkout.amountMinor, checkout.currency)}`)
       setPrintFiles(await listPrintFiles(order.id))
+      setFulfillMsg(partnerLine(paid))
     } catch (e) {
       if (e instanceof Error && e.message === 'auth') {
         setAuthOpen(true)
@@ -163,6 +186,7 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
         </span>
       )}
       {okMsg && <span className="text-xs text-fg-muted">{okMsg}</span>}
+      {fulfillMsg && <span className="text-xs text-fg-muted">{fulfillMsg}</span>}
       {printFiles[0] && (
         <button
           type="button"
@@ -189,6 +213,15 @@ async function listPrintFiles(orderId: string): Promise<PrintFileSummary[]> {
     await fetch(apiUrl(`${API_ORDERS}/${orderId}/print-files`), { credentials: 'include' }),
     (v) => printFileSummarySchema.array().parse(v),
   )
+}
+
+function partnerLine(order: {
+  state: string
+  partner?: string | null
+  partnerOrderId?: string | null
+}): string | null {
+  if (!order.partnerOrderId) return null
+  return `Partner · ${order.partner ?? 'sandbox'} · ${order.partnerOrderId} · ${order.state}`
 }
 
 async function downloadPrintFile(id: string): Promise<void> {
