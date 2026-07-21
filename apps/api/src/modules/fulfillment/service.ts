@@ -1,5 +1,6 @@
 import { badRequest, forbidden, notFound } from '../../errors.ts'
 import { logger } from '../../logger.ts'
+import { moderationService } from '../moderation/service.ts'
 import { assertTransition } from '../orders/transitions.ts'
 import { printPartner, type PartnerSubmitResult } from './partner.ts'
 import { fulfillmentRepo, type FulfillmentOrder } from './repo.ts'
@@ -54,6 +55,14 @@ export class FulfillmentService {
 
     if (order.state !== 'paid' && order.state !== 'in_production') {
       throw badRequest('Order must be paid before partner submit')
+    }
+
+    for (const item of order.items) {
+      await moderationService.assertCanPrint(item.designId, { orderId: order.id })
+      if (!item.printFile) throw badRequest('Print file missing for an order item')
+      if (!item.printFile.validated) {
+        throw badRequest('Print file failed validation; cannot submit to partner')
+      }
     }
 
     const items = order.items

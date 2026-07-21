@@ -7,6 +7,7 @@ import { uploadsRepo } from '../uploads/repo.ts'
 import { putUploadObject, readUploadObject } from '../uploads/storage.ts'
 import { loadDrawableImage, PRINT_DPI, renderPrintPng } from './render.ts'
 import { printFilesRepo, type OrderItemForPrint } from './repo.ts'
+import { assertPrintValid, validatePrintFile } from './validate.ts'
 import type { PrintFile } from '@customarc/db'
 import { moderationService } from '../moderation/service.ts'
 
@@ -67,7 +68,7 @@ export class PrintFilesService {
   }
 
   private async generateForItem(item: OrderItemForPrint): Promise<PrintFileSummary> {
-    await moderationService.assertCanPrint(item.designId)
+    await moderationService.assertCanPrint(item.designId, { orderId: item.orderId })
 
     const doc = parseDesignDocument(item.design.document) as DesignDocument
     const template = blankTemplateSpecSchema.parse(item.design.blank.template)
@@ -79,6 +80,15 @@ export class PrintFilesService {
       wrapHorizontal: template.wrapHorizontal,
     })
 
+    const check = validatePrintFile({
+      doc,
+      template,
+      widthPx,
+      heightPx,
+      dpi: PRINT_DPI,
+    })
+    assertPrintValid(check)
+
     const key = `${PRINT_ROOT}/${item.orderId}/${item.id}.png`
     const storageKey = await putUploadObject(key, png, 'image/png')
     const row = await this.repo.upsertForItem({
@@ -88,6 +98,7 @@ export class PrintFilesService {
       heightPx,
       dpi: PRINT_DPI,
       format: 'png',
+      validated: check.validated,
     })
 
     logger.info('print file generated', {
@@ -96,6 +107,7 @@ export class PrintFilesService {
       widthPx,
       heightPx,
       dpi: PRINT_DPI,
+      validated: check.validated,
     })
 
     return toSummary(row)

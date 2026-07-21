@@ -1,5 +1,8 @@
-/** Minimal keyword blocklist (issue 13 layer 1). Keep short; OpenAI covers nuance when keyed. */
-const BLOCKED = [
+/**
+ * Keyword blocklist — issue 13 layer 1 (reject-only).
+ * Keep short; OpenAI + semantic layers cover nuance when keyed.
+ */
+const NSFW = [
   'child porn',
   'childporn',
   'csam',
@@ -8,6 +11,27 @@ const BLOCKED = [
   'nazi',
   'swastika',
 ]
+
+/** Brand / franchise / character cues — common POD IP traps. */
+const IP = [
+  'disney',
+  'marvel',
+  'pokemon',
+  'pokémon',
+  'hello kitty',
+  'nike',
+  'adidas',
+  'gucci',
+  'louis vuitton',
+  'harry potter',
+  'star wars',
+  'spider-man',
+  'spiderman',
+  'mickey mouse',
+  'in the style of',
+]
+
+const BLOCKED = [...NSFW, ...IP]
 
 export function scanText(text: string): { ok: true } | { ok: false; reasons: string[] } {
   const hay = text.toLowerCase()

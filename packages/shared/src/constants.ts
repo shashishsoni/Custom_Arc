@@ -72,7 +72,24 @@ export const MODERATION_REVIEWER_IDS = optional('MODERATION_REVIEWER_IDS')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean)
+/** Founder inbox for print-hold / flagged upload emails (issue 19). */
+export const MODERATION_NOTIFY_EMAIL = optional('MODERATION_NOTIFY_EMAIL')
 export const OPENAI_API_KEY = optional('OPENAI_API_KEY')
+/**
+ * NVIDIA NIM API key (build.nvidia.com) — OpenAI-compatible fallback for moderation + semantic.
+ * Used when OPENAI_API_KEY is unset or OpenAI call returns null.
+ */
+export const NVIDIA_API_KEY = optional('NVIDIA_API_KEY')
+/** Multimodal content-safety model (OpenAI Moderations equivalent). */
+export const NVIDIA_MODERATION_MODEL = optional(
+  'NVIDIA_MODERATION_MODEL',
+  'nvidia/nemotron-3.5-content-safety',
+)
+/** Small instruct model for prompt IP/policy JSON screen (gpt-4o-mini equivalent). */
+export const NVIDIA_SEMANTIC_MODEL = optional(
+  'NVIDIA_SEMANTIC_MODEL',
+  'meta/llama-3.1-8b-instruct',
+)
 
 
 export const SENTRY_DSN = optional('SENTRY_DSN')

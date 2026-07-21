@@ -12,6 +12,7 @@ const fulfillmentSelect = {
   items: {
     select: {
       id: true,
+      designId: true,
       blankVariant: { select: { partnerSku: true } },
       printFile: {
         select: {
@@ -20,6 +21,7 @@ const fulfillmentSelect = {
           heightPx: true,
           dpi: true,
           format: true,
+          validated: true,
         },
       },
     },

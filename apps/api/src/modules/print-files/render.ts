@@ -1,4 +1,5 @@
 import { createCanvas, loadImage, type SKRSContext2D } from '@napi-rs/canvas'
+import sharp from 'sharp'
 import { mmToPx, renderDesign, type DrawableImage, type RenderContext } from '@customarc/design'
 import type { DesignDocument } from '@customarc/shared'
 
@@ -9,6 +10,7 @@ export const PRINT_PX_PER_MM = PRINT_DPI / 25.4
 /**
  * Render Design JSON → PNG buffer at 300 DPI (issue 15).
  * Same `renderDesign` as the browser preview — WYSIWYG by construction.
+ * Sharp embeds pHYs density so partners see 300 DPI metadata.
  */
 export async function renderPrintPng(input: {
   doc: DesignDocument
@@ -26,7 +28,9 @@ export async function renderPrintPng(input: {
     wrapHorizontal: input.wrapHorizontal,
   })
 
-  return { png: Buffer.from(canvas.toBuffer('image/png')), widthPx, heightPx }
+  const raw = Buffer.from(canvas.toBuffer('image/png'))
+  const png = await sharp(raw).withMetadata({ density: PRINT_DPI }).png().toBuffer()
+  return { png, widthPx, heightPx }
 }
 
 export async function loadDrawableImage(bytes: Buffer): Promise<DrawableImage> {

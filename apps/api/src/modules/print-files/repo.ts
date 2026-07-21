@@ -50,6 +50,7 @@ export const printFilesRepo = {
     heightPx: number
     dpi: number
     format: string
+    validated: boolean
   }): Promise<PrintFile> {
     return prisma.printFile.upsert({
       where: { orderItemId: input.orderItemId },
@@ -60,7 +61,7 @@ export const printFilesRepo = {
         heightPx: input.heightPx,
         dpi: input.dpi,
         format: input.format,
-        validated: true,
+        validated: input.validated,
       },
       update: {
         storageKey: input.storageKey,
@@ -68,7 +69,7 @@ export const printFilesRepo = {
         heightPx: input.heightPx,
         dpi: input.dpi,
         format: input.format,
-        validated: true,
+        validated: input.validated,
       },
     })
   },

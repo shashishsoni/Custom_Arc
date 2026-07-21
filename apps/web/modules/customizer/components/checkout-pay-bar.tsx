@@ -114,8 +114,8 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
       )
       if (!gate.ok) {
         throw new Error(
-          gate.reasons[0]
-            ? `Moderation blocked: ${gate.reasons[0]}`
+          gate.reasons.length
+            ? `Moderation hold: ${gate.reasons.slice(0, 3).join(' · ')}`
             : 'Design failed moderation check',
         )
       }

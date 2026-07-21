@@ -7,7 +7,11 @@ import {
 import { badRequest, forbidden, notFound } from '../../errors.ts'
 import { logger } from '../../logger.ts'
 import { designerRepo } from '../designer/repo.ts'
+import { readUploadObject } from '../uploads/storage.ts'
+import { uploadsRepo } from '../uploads/repo.ts'
 import { scanText } from './blocklist.ts'
+import { notifyFounderHold } from './notify.ts'
+import { moderateContent, semanticPromptCheck } from './providers.ts'
 import { moderationRepo } from './repo.ts'
 
 export type { ModerationVerdict }
@@ -18,7 +22,9 @@ export type PrintGateResult = {
   reasons: string[]
 }
 
-/** Issue 13 + 19 — moderate content; hard-block print until approved. */
+type LayerVerdict = { verdict: ModerationVerdict; reasons: string[] }
+
+/** Issue 13 + 19 — layered moderation; hard-block print until approved. */
 export class ModerationService {
   constructor(
     private readonly repo = moderationRepo,
@@ -29,37 +35,76 @@ export class ModerationService {
     const text = prompt.trim()
     if (!text) throw badRequest('Prompt is empty')
 
-    const scan = scanText(text)
-    const verdict: ModerationVerdict = scan.ok ? 'approved' : 'blocked'
-    const reasons = scan.ok ? [] : scan.reasons
-
-    await this.repo.createPromptFlag({ prompt: text, verdict, reasons })
-    if (!scan.ok) logger.warn('prompt blocked', { reasons })
-    return verdict
+    const result = await this.runTextPipeline(text, { semantic: true })
+    await this.repo.createPromptFlag({
+      prompt: text,
+      verdict: result.verdict,
+      reasons: result.reasons,
+    })
+    if (result.verdict !== 'approved') {
+      logger.warn('prompt moderated', { verdict: result.verdict, reasons: result.reasons })
+    }
+    return result.verdict
   }
 
-  /** Called after upload create — records flag + upload status. */
+  /** Called after upload create — blocklist N/A; OpenAI image when keyed. */
   async reviewUpload(uploadId: string): Promise<ModerationFlag> {
-    const verdict: ModerationVerdict = MODERATION_AUTO_APPROVE ? 'approved' : 'pending'
-    const flag = await this.repo.createUploadFlag({
-      uploadId,
-      verdict,
-      reasons: verdict === 'pending' ? ['awaiting_review'] : [],
-    })
+    const upload = await uploadsRepo.getById(uploadId)
+    if (!upload) throw notFound('Upload not found')
+
+    let verdict: ModerationVerdict = MODERATION_AUTO_APPROVE ? 'approved' : 'pending'
+    const reasons: string[] = []
+
+    try {
+      const { body, contentType } = await readUploadObject(upload.storageKey)
+      const ai = await moderateContent({
+        image: { bytes: body, mimeType: contentType || upload.mimeType },
+      })
+      if (ai) {
+        verdict = ai.verdict === 'approved' && !MODERATION_AUTO_APPROVE ? 'pending' : ai.verdict
+        reasons.push(...ai.reasons)
+        if (ai.verdict === 'approved' && !MODERATION_AUTO_APPROVE) {
+          reasons.push('awaiting_review')
+        }
+      } else if (!MODERATION_AUTO_APPROVE) {
+        reasons.push('awaiting_review')
+      }
+    } catch (e) {
+      logger.warn('upload moderation read failed', {
+        uploadId,
+        err: e instanceof Error ? e.message : String(e),
+      })
+      verdict = 'flagged'
+      reasons.push('upload:unreadable')
+    }
+
+    const flag = await this.repo.createUploadFlag({ uploadId, verdict, reasons })
     if (verdict === 'approved') await this.repo.setUploadStatus(uploadId, 'approved')
+    else if (verdict === 'blocked' || verdict === 'flagged') {
+      await this.repo.setUploadStatus(uploadId, 'flagged')
+      void notifyFounderHold({
+        designId: `upload:${uploadId}`,
+        reasons: reasons.length ? reasons : [verdict],
+      })
+    }
     return flag
   }
 
-  /** Issue 19 — must pass before print file / partner submit. */
   async canPrint(designId: string): Promise<boolean> {
     return (await this.checkPrintGate(designId)).ok
   }
 
-  async assertCanPrint(designId: string): Promise<void> {
+  async assertCanPrint(designId: string, ctx?: { orderId?: string }): Promise<void> {
     const gate = await this.checkPrintGate(designId)
-    if (!gate.ok) {
-      throw forbidden(`Design failed moderation print gate: ${gate.reasons.join('; ') || 'blocked'}`)
-    }
+    if (gate.ok) return
+    await notifyFounderHold({
+      designId,
+      ...(ctx?.orderId !== undefined ? { orderId: ctx.orderId } : {}),
+      reasons: gate.reasons,
+    })
+    throw forbidden(
+      `Design failed moderation print gate: ${gate.reasons.join('; ') || 'blocked'}`,
+    )
   }
 
   async checkPrintGate(designId: string): Promise<PrintGateResult> {
@@ -71,8 +116,14 @@ export class ModerationService {
 
     for (const layer of doc.layers) {
       if (layer.type === 'text') {
-        const scan = scanText(layer.text)
-        if (!scan.ok) reasons.push(...scan.reasons.map((r) => `text:${layer.id}:${r}`))
+        const textResult = await this.runTextPipeline(layer.text, { semantic: false })
+        if (textResult.verdict !== 'approved') {
+          const tagged =
+            textResult.reasons.length > 0
+              ? textResult.reasons.map((r) => `text:${layer.id}:${r}`)
+              : [`text:${layer.id}:${textResult.verdict}`]
+          reasons.push(...tagged)
+        }
       }
       if (layer.type === 'image') {
         if (layer.uploadId.startsWith('local-')) {
@@ -120,7 +171,25 @@ export class ModerationService {
     return updated
   }
 
-  /** Backfill missing flags (pre-moderation uploads) when auto-approve is on. */
+  /** Layer 1 blocklist → optional semantic → OpenAI text moderation. */
+  private async runTextPipeline(
+    text: string,
+    opts: { semantic: boolean },
+  ): Promise<LayerVerdict> {
+    const scan = scanText(text)
+    if (!scan.ok) return { verdict: 'blocked', reasons: scan.reasons }
+
+    if (opts.semantic) {
+      const semantic = await semanticPromptCheck(text)
+      if (semantic && semantic.verdict !== 'approved') return semantic
+    }
+
+    const ai = await moderateContent({ text })
+    if (ai && ai.verdict !== 'approved') return ai
+
+    return { verdict: 'approved', reasons: [] }
+  }
+
   private async ensureUploadFlag(uploadId: string): Promise<ModerationFlag | null> {
     const existing = await this.repo.getByUploadId(uploadId)
     if (existing) return existing

@@ -2,6 +2,7 @@ export * from './design-document'
 export * from './blank'
 export * from './credits'
 export * from './api'
+export * from './moderation'
 export {
   API_BASE_URL,
   WEB_BASE_URL,
