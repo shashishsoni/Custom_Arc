@@ -10,7 +10,6 @@ export const STUDIO_STAGE_BG =
 
 export type StudioStageProps = {
   children: ReactNode
-  /** Product / section title (omit for bare shell). */
   title?: string
   meta?: string
   hint?: string
@@ -22,7 +21,7 @@ export type StudioStageProps = {
   'aria-label'?: string
 }
 
-/** Shared blush stage shell — customizer, home, or any product canvas. */
+/** Flat shared stage shell — home hero applies its own desk tilt on the scene host. */
 export function StudioStage({
   children,
   title,
@@ -53,12 +52,14 @@ export function StudioStage({
     <section
       aria-label={ariaLabel}
       className={cn(
-        'absolute inset-0 z-0 origin-center [transform:perspective(1200px)_rotateX(20deg)] [&_canvas]:block [&_canvas]:size-full [&_canvas]:touch-none [&_canvas]:outline-none',
+        'relative grid min-h-0 place-items-center overflow-hidden border border-border',
         STUDIO_STAGE_BG,
         className,
       )}
     >
-      <div>{children}</div>
+      <div className="absolute inset-0 z-0 [&_canvas]:block [&_canvas]:size-full [&_canvas]:touch-none [&_canvas]:outline-none">
+        {children}
+      </div>
 
       {showCaption && (
         <div className="pointer-events-none absolute top-[clamp(1.25rem,3vw,2.25rem)] left-[clamp(1.25rem,3vw,2.25rem)] z-[1] max-w-[min(20rem,42vw)]">

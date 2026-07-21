@@ -26,7 +26,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cn(outfit.variable, playfair.variable, 'font-sans')}>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={cn(outfit.variable, playfair.variable, 'font-sans')}
+    >
       <body>
         <SiteHeader />
         <div className="mx-auto w-full max-w-content px-4 md:px-6">{children}</div>

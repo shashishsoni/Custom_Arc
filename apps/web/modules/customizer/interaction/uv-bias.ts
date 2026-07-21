@@ -19,6 +19,10 @@ export function cloneMapForMesh(source: THREE.Texture, meshName: string): THREE.
   map.wrapT = THREE.RepeatWrapping
   map.repeat.set(flipU ? -1 : 1, flipV ? -1 : 1)
   map.offset.set(flipU ? 1 : 0, flipV ? 1 : 0)
+  map.anisotropy = Math.max(source.anisotropy, 16)
+  map.minFilter = THREE.LinearMipmapLinearFilter
+  map.magFilter = THREE.LinearFilter
+  map.generateMipmaps = true
   map.needsUpdate = true
   return map
 }

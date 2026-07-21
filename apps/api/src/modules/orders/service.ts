@@ -2,6 +2,8 @@ import type { CheckoutSession, ConfirmPaymentRequest, OrderSummary } from '@cust
 import { badRequest, conflict, forbidden, notFound } from '../../errors.ts'
 import { billingService } from '../billing/service.ts'
 import { designerService } from '../designer/service.ts'
+import { printFilesService } from '../print-files/service.ts'
+import { logger } from '../../logger.ts'
 import { ordersRepo, type OrderRow } from './repo.ts'
 
 export type OrderState = OrderSummary['state']
@@ -37,6 +39,7 @@ export class OrderService {
     private readonly repo = ordersRepo,
     private readonly billing = billingService,
     private readonly designs = designerService,
+    private readonly printFiles = printFilesService,
   ) {}
 
   async createFromCheckout(input: {
@@ -102,7 +105,9 @@ export class OrderService {
         throw badRequest('Mock confirm only allowed for mock checkout sessions')
       }
       assertTransition(order.state, 'paid')
-      return toSummary(await this.repo.markPaid(order.id, `mock_pay_${order.id}`))
+      const paid = await this.repo.markPaid(order.id, `mock_pay_${order.id}`)
+      await this.afterPaid(paid.id)
+      return toSummary(paid)
     }
 
     if (order.razorpayOrderId !== body.razorpayOrderId) {
@@ -119,7 +124,18 @@ export class OrderService {
     }
 
     assertTransition(order.state, 'paid')
-    return toSummary(await this.repo.markPaid(order.id, body.razorpayPaymentId))
+    const paid = await this.repo.markPaid(order.id, body.razorpayPaymentId)
+    await this.afterPaid(paid.id)
+    return toSummary(paid)
+  }
+
+  /** Fire-and-forget safe: payment already succeeded. */
+  async afterPaid(orderId: string): Promise<void> {
+    try {
+      await this.printFiles.generateForOrder(orderId)
+    } catch (error) {
+      logger.error('print file generation failed after payment', error, { orderId })
+    }
   }
 
   private async requireOwned(orderId: string, userId: string): Promise<OrderRow> {

@@ -2,6 +2,7 @@ import { Elysia, t } from 'elysia'
 import { confirmPaymentRequestSchema, ok } from '@customarc/shared'
 import { API_ORDERS } from '@customarc/shared/constants'
 import { withAuth } from '../auth/plugin.ts'
+import { printFilesService } from '../print-files/service.ts'
 import { orderService } from './service.ts'
 
 export const orderRoutes = new Elysia({ prefix: API_ORDERS })
@@ -27,14 +28,17 @@ export const orderRoutes = new Elysia({ prefix: API_ORDERS })
       return ok(await orderService.confirmPayment(params.id, user.id, parsed))
     },
     {
-      body: t.Union([
-        t.Object({
-          mode: t.Literal('razorpay'),
-          razorpayOrderId: t.String({ minLength: 1 }),
-          razorpayPaymentId: t.String({ minLength: 1 }),
-          razorpaySignature: t.String({ minLength: 1 }),
-        }),
-        t.Object({ mode: t.Literal('mock') }),
-      ]),
+      body: t.Object({
+        mode: t.String(),
+        razorpayOrderId: t.Optional(t.String()),
+        razorpayPaymentId: t.Optional(t.String()),
+        razorpaySignature: t.Optional(t.String()),
+      }),
     },
+  )
+  .get('/:id/print-files', async ({ params, user }) =>
+    ok(await printFilesService.listForOwnedOrder(params.id, user.id)),
+  )
+  .post('/:id/print-files', async ({ params, user }) =>
+    ok(await printFilesService.generateForOwnedOrder(params.id, user.id)),
   )

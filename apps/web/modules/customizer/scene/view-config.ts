@@ -31,7 +31,7 @@ export type CustomizerViewConfig = {
 export const DEFAULT_VIEW: CustomizerViewConfig = {
   camera: {
     fov: 40,
-    position: [0, 0.35, 3.4],
+    position: [-3.4, 0.35, 0],
     target: [0, 0, 0],
     minDistance: 1.6,
     maxDistance: 5,
@@ -48,7 +48,7 @@ export const VIEW_BY_SLUG: Record<string, CustomizerViewConfig> = {
   mug: {
     camera: {
       fov: 40,
-      position: [0, 0.35, 3.4],
+      position: [-3.4, 0.35, 0],
       target: [0, 0, 0],
       minDistance: 1.6,
       maxDistance: 5,

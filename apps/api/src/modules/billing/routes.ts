@@ -4,7 +4,7 @@ import { API_BILLING } from '@customarc/shared/constants'
 import { badRequest } from '../../errors.ts'
 import { billingService } from './service.ts'
 import { ordersRepo } from '../orders/repo.ts'
-import { assertTransition } from '../orders/service.ts'
+import { assertTransition, orderService } from '../orders/service.ts'
 
 /**
  * Razorpay webhooks are a settlement source of truth for async payment events.
@@ -30,6 +30,7 @@ export const billingRoutes = new Elysia({ prefix: API_BILLING }).post('/webhook'
       if (order?.state === 'designing') {
         assertTransition(order.state, 'paid')
         await ordersRepo.markPaid(order.id, paymentId)
+        await orderService.afterPaid(order.id)
       }
     }
   }

@@ -8,7 +8,7 @@ type Props = {
   className?: string
 }
 
-/** Scene host — stage tilt / canvas fill live on StudioStage. */
+/** Flat WebGL host — desk tilt is applied by the home hero wrapper, not here. */
 export function HeroProductsScene({ className }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -26,7 +26,10 @@ export function HeroProductsScene({ className }: Props) {
     <>
       <div
         ref={hostRef}
-        className={cn('absolute inset-0', className)}
+        className={cn(
+          'absolute inset-0 [&_canvas]:block [&_canvas]:size-full [&_canvas]:touch-none [&_canvas]:outline-none',
+          className,
+        )}
         role="img"
         aria-label="Interactive 3D CustomArc mug and phone case"
       />

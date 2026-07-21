@@ -54,7 +54,7 @@ const BLANKS: {
     slug: 'mug',
     name: 'Classic Mug',
     category: 'mug',
-    template: template(210, 95, 3, '/model/mug-print.glb?v=3', true),
+    template: template(210, 95, 3, '/model/mug-print.glb?v=4', true),
     variants: [
       { name: '11oz', partnerSku: 'CA-MUG-11', priceMinor: 49900, currency: 'INR' },
       { name: '15oz', partnerSku: 'CA-MUG-15', priceMinor: 59900, currency: 'INR' },
@@ -74,10 +74,13 @@ const BLANKS: {
 ]
 
 async function upsertBlank(blank: (typeof BLANKS)[number]) {
-  const existing = await prisma.blank.findUnique({ where: { slug: blank.slug } })
+  const existing = await prisma.blank.findUnique({
+    where: { slug: blank.slug },
+    include: { variants: true },
+  })
 
   if (existing) {
-    await prisma.blankVariant.deleteMany({ where: { blankId: existing.id } })
+    // Update catalog fields only — never delete variants (orders may reference them).
     await prisma.blank.update({
       where: { id: existing.id },
       data: {
@@ -85,9 +88,24 @@ async function upsertBlank(blank: (typeof BLANKS)[number]) {
         category: blank.category,
         template: blank.template,
         isActive: true,
-        variants: { create: blank.variants },
       },
     })
+    for (const v of blank.variants) {
+      const hit = existing.variants.find((row) => row.partnerSku === v.partnerSku)
+      if (hit) {
+        await prisma.blankVariant.update({
+          where: { id: hit.id },
+          data: {
+            name: v.name,
+            priceMinor: v.priceMinor,
+            currency: v.currency,
+            isActive: true,
+          },
+        })
+      } else {
+        await prisma.blankVariant.create({ data: { blankId: existing.id, ...v } })
+      }
+    }
     return
   }
 

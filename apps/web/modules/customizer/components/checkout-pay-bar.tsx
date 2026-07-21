@@ -5,9 +5,11 @@ import type { Blank } from '@customarc/shared'
 import {
   checkoutSessionSchema,
   orderSummarySchema,
+  printFileSummarySchema,
   type CheckoutSession,
+  type PrintFileSummary,
 } from '@customarc/shared'
-import { API_ORDERS, apiUrl } from '@customarc/shared/constants'
+import { API_ORDERS, API_PRINT_FILES, apiUrl } from '@customarc/shared/constants'
 import { authClient } from '@/lib/auth-client'
 import { AuthModal } from '@/modules/auth-modal'
 import { Button } from '@/components/ui/button'
@@ -72,6 +74,7 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [okMsg, setOkMsg] = useState<string | null>(null)
+  const [printFiles, setPrintFiles] = useState<PrintFileSummary[]>([])
   const [authOpen, setAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in')
 
@@ -125,11 +128,13 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
           orderSummarySchema.parse,
         )
         setOkMsg(`Paid (mock) · ${formatMoney(paid.totalMinor, paid.currency)}`)
+        setPrintFiles(await listPrintFiles(order.id))
         return
       }
 
       await openRazorpay(checkout)
       setOkMsg(`Paid · ${formatMoney(checkout.amountMinor, checkout.currency)}`)
+      setPrintFiles(await listPrintFiles(order.id))
     } catch (e) {
       if (e instanceof Error && e.message === 'auth') {
         setAuthOpen(true)
@@ -158,6 +163,15 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
         </span>
       )}
       {okMsg && <span className="text-xs text-fg-muted">{okMsg}</span>}
+      {printFiles[0] && (
+        <button
+          type="button"
+          className="text-xs font-medium text-fg underline-offset-2 hover:underline"
+          onClick={() => void downloadPrintFile(printFiles[0]!.id)}
+        >
+          Print file · {printFiles[0].widthPx}×{printFiles[0].heightPx} @ {printFiles[0].dpi} DPI
+        </button>
+      )}
       {error && <span className="text-xs text-destructive">{error}</span>}
 
       <AuthModal
@@ -168,6 +182,25 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
       />
     </div>
   )
+}
+
+async function listPrintFiles(orderId: string): Promise<PrintFileSummary[]> {
+  return readOk(
+    await fetch(apiUrl(`${API_ORDERS}/${orderId}/print-files`), { credentials: 'include' }),
+    (v) => printFileSummarySchema.array().parse(v),
+  )
+}
+
+async function downloadPrintFile(id: string): Promise<void> {
+  const res = await fetch(apiUrl(`${API_PRINT_FILES}/${id}/content`), { credentials: 'include' })
+  if (!res.ok) throw new Error('Could not download print file')
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `print-${id}.png`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 function openRazorpay(checkout: CheckoutSession): Promise<void> {

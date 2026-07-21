@@ -96,6 +96,7 @@ export const API_AUTH = '/api/auth'
 export const API_ORDERS = '/orders'
 export const API_BILLING = '/billing'
 export const API_BILLING_WEBHOOK = '/billing/webhook'
+export const API_PRINT_FILES = '/print-files'
 
 /** Absolute URL for an API path. */
 export function apiUrl(path: string): string {

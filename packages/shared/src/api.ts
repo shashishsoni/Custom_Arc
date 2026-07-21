@@ -95,3 +95,15 @@ export const confirmPaymentRequestSchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('mock') }),
 ])
 export type ConfirmPaymentRequest = z.infer<typeof confirmPaymentRequestSchema>
+
+/** GET /orders/:id/print-files */
+export const printFileSummarySchema = z.object({
+  id: z.string().min(1),
+  orderItemId: z.string().min(1),
+  widthPx: z.number().int().positive(),
+  heightPx: z.number().int().positive(),
+  dpi: z.number().int().positive(),
+  format: z.string().min(1),
+  validated: z.boolean(),
+})
+export type PrintFileSummary = z.infer<typeof printFileSummarySchema>

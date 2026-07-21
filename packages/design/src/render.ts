@@ -62,6 +62,12 @@ export function renderDesign(doc: DesignDocument, ctx: RenderContext, opts: Rend
   ctx.canvas.width = widthPx
   ctx.canvas.height = heightPx
   ctx.clearRect(0, 0, widthPx, heightPx)
+  const soft = ctx as RenderContext & {
+    imageSmoothingEnabled?: boolean
+    imageSmoothingQuality?: 'low' | 'medium' | 'high'
+  }
+  if ('imageSmoothingEnabled' in soft) soft.imageSmoothingEnabled = true
+  if ('imageSmoothingQuality' in soft) soft.imageSmoothingQuality = 'high'
 
   ctx.fillStyle = doc.background.color
   ctx.fillRect(0, 0, widthPx, heightPx)
