@@ -1,3 +1,4 @@
+import type { Order } from '@customarc/db'
 import type { CheckoutSession, ConfirmPaymentRequest, OrderSummary } from '@customarc/shared'
 import { badRequest, forbidden, notFound } from '../../errors.ts'
 import { billingService } from '../billing/service.ts'
@@ -5,13 +6,13 @@ import { designerService } from '../designer/service.ts'
 import { fulfillmentService } from '../fulfillment/service.ts'
 import { printFilesService } from '../print-files/service.ts'
 import { logger } from '../../logger.ts'
-import { ordersRepo, type OrderRow } from './repo.ts'
+import { ordersRepo } from './repo.ts'
 import { assertTransition } from './transitions.ts'
 
 export type { OrderState } from './transitions.ts'
 export { assertTransition } from './transitions.ts'
 
-function toSummary(row: OrderRow): OrderSummary {
+function toSummary(row: Order): OrderSummary {
   return {
     id: row.id,
     state: row.state,
@@ -130,7 +131,7 @@ export class OrderService {
     }
   }
 
-  private async requireOwned(orderId: string, userId: string): Promise<OrderRow> {
+  private async requireOwned(orderId: string, userId: string): Promise<Order> {
     const order = await this.repo.getById(orderId)
     if (!order) throw notFound('Order not found')
     if (order.userId !== userId) throw forbidden()

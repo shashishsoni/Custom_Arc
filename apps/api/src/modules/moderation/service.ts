@@ -1,3 +1,4 @@
+import type { ModerationFlag, ModerationVerdict } from '@customarc/db'
 import { parseDesignDocument, type DesignDocument } from '@customarc/shared'
 import {
   MODERATION_AUTO_APPROVE,
@@ -7,7 +8,7 @@ import { badRequest, forbidden, notFound } from '../../errors.ts'
 import { logger } from '../../logger.ts'
 import { designerRepo } from '../designer/repo.ts'
 import { scanText } from './blocklist.ts'
-import { moderationRepo, type ModerationFlagRow, type ModerationVerdict } from './repo.ts'
+import { moderationRepo } from './repo.ts'
 
 export type { ModerationVerdict }
 
@@ -38,7 +39,7 @@ export class ModerationService {
   }
 
   /** Called after upload create — records flag + upload status. */
-  async reviewUpload(uploadId: string): Promise<ModerationFlagRow> {
+  async reviewUpload(uploadId: string): Promise<ModerationFlag> {
     const verdict: ModerationVerdict = MODERATION_AUTO_APPROVE ? 'approved' : 'pending'
     const flag = await this.repo.createUploadFlag({
       uploadId,
@@ -79,8 +80,8 @@ export class ModerationService {
           continue
         }
         const flag = await this.ensureUploadFlag(layer.uploadId)
-        if (flag.verdict !== 'approved') {
-          reasons.push(`upload:${layer.uploadId}:${flag.verdict}`)
+        if (!flag || flag.verdict !== 'approved') {
+          reasons.push(`upload:${layer.uploadId}:${flag?.verdict ?? 'pending'}`)
         }
       }
     }
@@ -99,7 +100,7 @@ export class ModerationService {
     flagId: string,
     reviewerId: string,
     verdict: 'approved' | 'blocked' | 'flagged',
-  ): Promise<ModerationFlagRow> {
+  ): Promise<ModerationFlag> {
     if (!isReviewer(reviewerId)) throw forbidden('Not a moderation reviewer')
     const existing = await this.repo.getById(flagId)
     if (!existing) throw notFound('Moderation flag not found')
@@ -118,23 +119,12 @@ export class ModerationService {
     }
     return updated
   }
+
   /** Backfill missing flags (pre-moderation uploads) when auto-approve is on. */
-  private async ensureUploadFlag(uploadId: string): Promise<ModerationFlagRow> {
+  private async ensureUploadFlag(uploadId: string): Promise<ModerationFlag | null> {
     const existing = await this.repo.getByUploadId(uploadId)
     if (existing) return existing
-    if (!MODERATION_AUTO_APPROVE) {
-      return {
-        id: '',
-        subjectType: 'upload',
-        generationId: null,
-        uploadId,
-        prompt: null,
-        verdict: 'pending',
-        reasons: ['unreviewed'],
-        reviewedById: null,
-        reviewedAt: null,
-      }
-    }
+    if (!MODERATION_AUTO_APPROVE) return null
     return this.reviewUpload(uploadId)
   }
 }

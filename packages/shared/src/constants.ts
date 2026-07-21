@@ -108,9 +108,13 @@ export const API_BILLING = '/billing'
 export const API_BILLING_WEBHOOK = '/billing/webhook'
 export const API_PRINT_FILES = '/print-files'
 export const API_MODERATION = '/moderation'
+export const API_FULFILLMENT = '/fulfillment'
 
 /** Sandbox partner when API key unset (issue 17 first proof). */
 export const PRINT_PARTNER_SANDBOX = !PRINT_PARTNER_API_KEY
+
+/** Partner shipment webhook shared secret (issue 18). Empty = dev/sandbox only. */
+export const FULFILLMENT_WEBHOOK_SECRET = optional('FULFILLMENT_WEBHOOK_SECRET')
 
 
 /** Absolute URL for an API path. */
@@ -124,3 +128,4 @@ export function apiUrl(path: string): string {
 export const WEB_HOME = '/'
 export const WEB_CATALOG = '/catalog'
 export const WEB_CUSTOMIZE = '/customize'
+export const WEB_ORDERS = '/orders'

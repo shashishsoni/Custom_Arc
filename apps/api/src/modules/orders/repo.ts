@@ -1,29 +1,15 @@
-import type { OrderState } from '@customarc/shared'
+import type { Order } from '@customarc/db'
 import { prisma } from '@customarc/db'
 
-export type OrderRow = {
-  id: string
-  userId: string
-  state: OrderState
-  totalMinor: number
-  currency: string
-  partner: string | null
-  partnerOrderId: string | null
-  razorpayOrderId: string | null
-  razorpayPaymentId: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
 export const ordersRepo = {
-  async create(input: {
+  create(input: {
     userId: string
     totalMinor: number
     currency: string
     designId: string
     blankVariantId: string
     unitPriceMinor: number
-  }): Promise<OrderRow> {
+  }): Promise<Order> {
     return prisma.order.create({
       data: {
         userId: input.userId,
@@ -38,34 +24,43 @@ export const ordersRepo = {
           },
         },
       },
-    }) as unknown as Promise<OrderRow>
+    })
   },
 
-  async getById(id: string): Promise<OrderRow | null> {
-    return prisma.order.findUnique({ where: { id } }) as unknown as Promise<OrderRow | null>
+  getById(id: string): Promise<Order | null> {
+    return prisma.order.findUnique({ where: { id } })
   },
 
-  async setRazorpayOrderId(id: string, razorpayOrderId: string): Promise<OrderRow> {
+  setRazorpayOrderId(id: string, razorpayOrderId: string): Promise<Order> {
     return prisma.order.update({
       where: { id },
       data: { razorpayOrderId },
-    }) as unknown as Promise<OrderRow>
+    })
   },
 
-  async markPaid(id: string, razorpayPaymentId: string | null): Promise<OrderRow> {
+  markPaid(id: string, razorpayPaymentId: string | null): Promise<Order> {
     return prisma.order.update({
       where: { id },
       data: { state: 'paid', razorpayPaymentId },
-    }) as unknown as Promise<OrderRow>
+    })
   },
 
-  async getByRazorpayOrderId(razorpayOrderId: string): Promise<OrderRow | null> {
-    return prisma.order.findFirst({
-      where: { razorpayOrderId },
-    }) as unknown as Promise<OrderRow | null>
+  getByRazorpayOrderId(razorpayOrderId: string): Promise<Order | null> {
+    return prisma.order.findFirst({ where: { razorpayOrderId } })
   },
 
-  async getVariant(id: string) {
+  getVariant(id: string): Promise<{
+    id: string
+    blankId: string
+    name: string
+    partnerSku: string
+    priceMinor: number
+    currency: string
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    blank: { id: string; slug: string }
+  } | null> {
     return prisma.blankVariant.findUnique({
       where: { id },
       include: { blank: { select: { id: true, slug: true } } },

@@ -10,11 +10,13 @@ import {
   type CheckoutSession,
   type PrintFileSummary,
 } from '@customarc/shared'
-import { API_MODERATION, API_ORDERS, API_PRINT_FILES, apiUrl } from '@customarc/shared/constants'
+import { API_MODERATION, API_ORDERS, API_PRINT_FILES, WEB_ORDERS, apiUrl } from '@customarc/shared/constants'
 import { authClient } from '@/lib/auth-client'
 import { AuthModal } from '@/modules/auth-modal'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
+import type { Route } from 'next'
 
 type Props = {
   designId: string | null
@@ -77,6 +79,7 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
   const [okMsg, setOkMsg] = useState<string | null>(null)
   const [printFiles, setPrintFiles] = useState<PrintFileSummary[]>([])
   const [fulfillMsg, setFulfillMsg] = useState<string | null>(null)
+  const [paidOrderId, setPaidOrderId] = useState<string | null>(null)
   const [authOpen, setAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in')
 
@@ -87,6 +90,7 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
     setError(null)
     setOkMsg(null)
     setFulfillMsg(null)
+    setPaidOrderId(null)
     if (!session?.user) {
       setAuthOpen(true)
       return
@@ -147,6 +151,7 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
         setOkMsg(`Paid (mock) · ${formatMoney(paid.totalMinor, paid.currency)}`)
         setPrintFiles(await listPrintFiles(order.id))
         setFulfillMsg(partnerLine(paid))
+        setPaidOrderId(order.id)
         return
       }
 
@@ -158,6 +163,7 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
       setOkMsg(`Paid · ${formatMoney(checkout.amountMinor, checkout.currency)}`)
       setPrintFiles(await listPrintFiles(order.id))
       setFulfillMsg(partnerLine(paid))
+      setPaidOrderId(order.id)
     } catch (e) {
       if (e instanceof Error && e.message === 'auth') {
         setAuthOpen(true)
@@ -187,6 +193,14 @@ export function CheckoutPayBar({ designId, blank, className }: Props) {
       )}
       {okMsg && <span className="text-xs text-fg-muted">{okMsg}</span>}
       {fulfillMsg && <span className="text-xs text-fg-muted">{fulfillMsg}</span>}
+      {paidOrderId && (
+        <Link
+          href={`${WEB_ORDERS}/${paidOrderId}` as Route}
+          className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+        >
+          Track order
+        </Link>
+      )}
       {printFiles[0] && (
         <button
           type="button"

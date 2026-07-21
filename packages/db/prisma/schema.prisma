@@ -296,6 +296,11 @@ model Order {
   /** Razorpay order id (or `mock_<orderId>` when keys unset). */
   razorpayOrderId  String?
   razorpayPaymentId String?
+  /** Partner shipment tracking (issue 18). */
+  trackingNumber   String?
+  carrier          String?
+  shippedAt        DateTime?
+  deliveredAt      DateTime?
 
   items            OrderItem[]
 
@@ -305,6 +310,7 @@ model Order {
   @@index([userId])
   @@index([state])
   @@index([razorpayOrderId])
+  @@index([partnerOrderId])
   @@map("orders")
 }
 

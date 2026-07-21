@@ -1,25 +1,14 @@
+import type { ModerationFlag, ModerationVerdict } from '@customarc/db'
 import { prisma } from '@customarc/db'
 
-export type ModerationVerdict = 'pending' | 'approved' | 'flagged' | 'blocked'
-
-export type ModerationFlagRow = {
-  id: string
-  subjectType: 'prompt' | 'upload' | 'generation_output'
-  generationId: string | null
-  uploadId: string | null
-  prompt: string | null
-  verdict: ModerationVerdict
-  reasons: string[]
-  reviewedById: string | null
-  reviewedAt: Date | null
-}
+export type { ModerationVerdict }
 
 export const moderationRepo = {
-  async createUploadFlag(input: {
+  createUploadFlag(input: {
     uploadId: string
     verdict: ModerationVerdict
     reasons: string[]
-  }): Promise<ModerationFlagRow> {
+  }): Promise<ModerationFlag> {
     return prisma.moderationFlag.create({
       data: {
         subjectType: 'upload',
@@ -27,14 +16,14 @@ export const moderationRepo = {
         verdict: input.verdict,
         reasons: input.reasons,
       },
-    }) as unknown as Promise<ModerationFlagRow>
+    })
   },
 
-  async createPromptFlag(input: {
+  createPromptFlag(input: {
     prompt: string
     verdict: ModerationVerdict
     reasons: string[]
-  }): Promise<ModerationFlagRow> {
+  }): Promise<ModerationFlag> {
     return prisma.moderationFlag.create({
       data: {
         subjectType: 'prompt',
@@ -42,23 +31,21 @@ export const moderationRepo = {
         verdict: input.verdict,
         reasons: input.reasons,
       },
-    }) as unknown as Promise<ModerationFlagRow>
+    })
   },
 
-  async getByUploadId(uploadId: string): Promise<ModerationFlagRow | null> {
-    return prisma.moderationFlag.findUnique({
-      where: { uploadId },
-    }) as unknown as Promise<ModerationFlagRow | null>
+  getByUploadId(uploadId: string): Promise<ModerationFlag | null> {
+    return prisma.moderationFlag.findUnique({ where: { uploadId } })
   },
 
-  async getById(id: string): Promise<ModerationFlagRow | null> {
-    return prisma.moderationFlag.findUnique({ where: { id } }) as unknown as Promise<ModerationFlagRow | null>
+  getById(id: string): Promise<ModerationFlag | null> {
+    return prisma.moderationFlag.findUnique({ where: { id } })
   },
 
-  async setVerdict(
+  setVerdict(
     id: string,
     input: { verdict: ModerationVerdict; reviewedById: string; reasons?: string[] },
-  ): Promise<ModerationFlagRow> {
+  ): Promise<ModerationFlag> {
     return prisma.moderationFlag.update({
       where: { id },
       data: {
@@ -67,7 +54,7 @@ export const moderationRepo = {
         reviewedAt: new Date(),
         ...(input.reasons ? { reasons: input.reasons } : {}),
       },
-    }) as unknown as Promise<ModerationFlagRow>
+    })
   },
 
   async setUploadStatus(uploadId: string, status: 'flagged' | 'approved' | 'reencoded'): Promise<void> {

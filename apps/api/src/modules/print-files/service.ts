@@ -6,7 +6,8 @@ import { ordersRepo } from '../orders/repo.ts'
 import { uploadsRepo } from '../uploads/repo.ts'
 import { putUploadObject, readUploadObject } from '../uploads/storage.ts'
 import { loadDrawableImage, PRINT_DPI, renderPrintPng } from './render.ts'
-import { printFilesRepo, type OrderItemForPrint, type PrintFileRow } from './repo.ts'
+import { printFilesRepo, type OrderItemForPrint } from './repo.ts'
+import type { PrintFile } from '@customarc/db'
 import { moderationService } from '../moderation/service.ts'
 
 const PRINT_ROOT = 'CustomArc-Local/printfiles'
@@ -117,7 +118,7 @@ async function loadDesignImages(doc: DesignDocument): Promise<Map<string, Drawab
   return map
 }
 
-function toSummary(row: PrintFileRow): PrintFileSummary {
+function toSummary(row: PrintFile): PrintFileSummary {
   return {
     id: row.id,
     orderItemId: row.orderItemId,

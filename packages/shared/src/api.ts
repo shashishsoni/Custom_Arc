@@ -75,6 +75,22 @@ export const orderSummarySchema = z.object({
 })
 export type OrderSummary = z.infer<typeof orderSummarySchema>
 
+/** GET /orders/:id/tracking */
+export const orderTrackingStatusSchema = z.object({
+  id: z.string().min(1),
+  state: orderStateSchema,
+  totalMinor: z.number().int().nonnegative(),
+  currency: z.string().min(1),
+  partner: z.string().nullable(),
+  partnerOrderId: z.string().nullable(),
+  trackingNumber: z.string().nullable(),
+  carrier: z.string().nullable(),
+  shippedAt: z.string().nullable(),
+  deliveredAt: z.string().nullable(),
+  updatedAt: z.string().min(1),
+})
+export type OrderTrackingStatus = z.infer<typeof orderTrackingStatusSchema>
+
 /** POST /orders/:id/fulfill — partner submit result */
 export const fulfillmentSummarySchema = z.object({
   orderId: z.string().min(1),
