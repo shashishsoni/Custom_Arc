@@ -13,8 +13,8 @@ const HARD = [
   'swastika',
 ]
 
-export function scanText(text: string): { ok: true } | { ok: false; reasons: string[] } {
+export function scanText(text: string): { ok: boolean; reasons: string[] } {
   const hay = text.toLowerCase()
   const reasons = HARD.filter((term) => hay.includes(term)).map((term) => `blocklist:${term}`)
-  return reasons.length ? { ok: false, reasons } : { ok: true }
+  return reasons.length ? { ok: false, reasons } : { ok: true, reasons: [] }
 }
