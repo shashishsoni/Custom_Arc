@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /**
  * Vercel / CI install entrypoint.
- * Runs `pnpm install`; on minimumReleaseAge lockfile failures, auto-repairs
- * policy (trusted excludes + mature overrides) once and retries.
+ * Runs `pnpm install` from the monorepo root (finds pnpm-workspace.yaml).
+ * On minimumReleaseAge lockfile failures, auto-repairs once and retries.
  *
  * Never sets minimumReleaseAge to 0.
+ *
+ * Works when Vercel Root Directory is the repo root or apps/web.
  */
 
 import { spawnSync } from "node:child_process";
@@ -19,7 +21,22 @@ import {
 } from "./lib/pnpm-age-policy.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(__dirname, "..");
+
+function findMonorepoRoot() {
+  const starts = [process.cwd(), path.resolve(__dirname, "..")];
+  for (const start of starts) {
+    let dir = start;
+    for (;;) {
+      if (fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) return dir;
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  }
+  return path.resolve(__dirname, "..");
+}
+
+const root = findMonorepoRoot();
 
 function runPnpmInstall() {
   const result = spawnSync("pnpm", ["install"], {
@@ -57,6 +74,8 @@ function runRepair(logText) {
 }
 
 function main() {
+  console.error(`pnpm install (workspace root: ${root})`);
+
   const first = runPnpmInstall();
   if (first.code === 0) {
     process.exit(0);
