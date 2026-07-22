@@ -100,7 +100,7 @@ export async function semanticNvidia(prompt: string): Promise<ModerationAiResult
         status: res.status,
         model: NVIDIA_SEMANTIC_MODEL,
       })
-      return { verdict: 'flagged', reasons: ['semantic:nvidia:unavailable'] }
+      return null
     }
     const json = (await res.json()) as {
       choices?: { message?: { content?: string } }[]
@@ -108,7 +108,7 @@ export async function semanticNvidia(prompt: string): Promise<ModerationAiResult
     return parseSemanticModerationJson(json.choices?.[0]?.message?.content ?? '{}', 'nvidia')
   } catch (e) {
     logger.warn('nvidia semantic failed', { err: e instanceof Error ? e.message : String(e) })
-    return { verdict: 'flagged', reasons: ['semantic:nvidia:error'] }
+    return null
   }
 }
 

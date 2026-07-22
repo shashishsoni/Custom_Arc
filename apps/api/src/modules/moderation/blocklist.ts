@@ -1,8 +1,9 @@
 /**
- * Keyword blocklist — issue 13 layer 1 (reject-only).
- * Keep short; OpenAI + semantic layers cover nuance when keyed.
+ * Keyword blocklist — issue 13 layer 1 (hard reject only).
+ * Keep to clear illegal / extreme terms. Fan art & franchise styles are allowed
+ * for Phase-1 POD; NSFW/illegal still blocked via AI + this list.
  */
-const NSFW = [
+const HARD = [
   'child porn',
   'childporn',
   'csam',
@@ -12,29 +13,8 @@ const NSFW = [
   'swastika',
 ]
 
-/** Brand / franchise / character cues — common POD IP traps. */
-const IP = [
-  'disney',
-  'marvel',
-  'pokemon',
-  'pokémon',
-  'hello kitty',
-  'nike',
-  'adidas',
-  'gucci',
-  'louis vuitton',
-  'harry potter',
-  'star wars',
-  'spider-man',
-  'spiderman',
-  'mickey mouse',
-  'in the style of',
-]
-
-const BLOCKED = [...NSFW, ...IP]
-
 export function scanText(text: string): { ok: true } | { ok: false; reasons: string[] } {
   const hay = text.toLowerCase()
-  const reasons = BLOCKED.filter((term) => hay.includes(term)).map((term) => `blocklist:${term}`)
+  const reasons = HARD.filter((term) => hay.includes(term)).map((term) => `blocklist:${term}`)
   return reasons.length ? { ok: false, reasons } : { ok: true }
 }

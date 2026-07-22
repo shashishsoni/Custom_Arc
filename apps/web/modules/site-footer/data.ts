@@ -1,4 +1,13 @@
 import type { Route } from 'next'
+import {
+  WEB_BULK,
+  WEB_CATALOG,
+  WEB_CONTACT,
+  WEB_PRIVACY,
+  WEB_REFUND,
+  WEB_SHIPPING,
+  WEB_TERMS,
+} from '@customarc/shared/constants'
 
 export const TITLE_ID = 'site-footer-wordmark'
 
@@ -30,16 +39,19 @@ export const NAV_COLUMNS: FooterNavColumn[] = [
     tone: 'primary',
     kind: 'links',
     items: [
-      { label: 'Catalog', href: '/catalog' },
-      { label: 'Mugs', href: '/catalog' },
-      { label: 'Cases', href: '/catalog' },
+      { label: 'Catalog', href: WEB_CATALOG },
+      { label: 'Mugs', href: WEB_CATALOG },
+      { label: 'Cases', href: WEB_CATALOG },
     ],
   },
   {
     title: 'Studio',
     tone: 'accent-2',
     kind: 'links',
-    items: [{ label: 'Start customizing', href: '/catalog' }],
+    items: [
+      { label: 'Start customizing', href: WEB_CATALOG },
+      { label: 'Bulk orders', href: WEB_BULK as Route },
+    ],
   },
   {
     title: 'Notes',
@@ -53,9 +65,11 @@ export const NAV_COLUMNS: FooterNavColumn[] = [
     tone: 'accent-2',
     kind: 'links',
     items: [
-      // Phase 1 stubs — routes not shipped yet
-      { label: 'Privacy', href: '/privacy' as Route },
-      { label: 'Terms', href: '/terms' as Route },
+      { label: 'Privacy', href: WEB_PRIVACY as Route },
+      { label: 'Terms', href: WEB_TERMS as Route },
+      { label: 'Shipping', href: WEB_SHIPPING as Route },
+      { label: 'Refunds', href: WEB_REFUND as Route },
+      { label: 'Contact', href: WEB_CONTACT as Route },
     ],
   },
 ]

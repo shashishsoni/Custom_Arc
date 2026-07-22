@@ -1,9 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Blank, DesignDocument } from '@customarc/shared'
-import { WEB_CATALOG } from '@customarc/shared/constants'
+import { designDetailSchema } from '@customarc/shared'
+import { API_DESIGNS, WEB_CATALOG, WEB_CUSTOMIZE, apiUrl } from '@customarc/shared/constants'
 import { CustomizerScene } from '../scene'
 import { emptyDocForBlank, patchTransform } from '../design/design-doc'
 import type { DesignTexture } from '../design/design-texture'
@@ -16,16 +18,21 @@ import { StudioStage } from './studio-stage'
 
 type Props = {
   blank: Blank
+  initialDesignId?: string | null
   camera?: CustomizerCamera
   model?: CustomizerModelPose
 }
 
-export function CustomizerView({ blank, camera, model }: Props) {
+export function CustomizerView({ blank, initialDesignId = null, camera, model }: Props) {
+  const router = useRouter()
   const [doc, setDoc] = useState<DesignDocument>(() => emptyDocForBlank(blank))
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [texture, setTexture] = useState<DesignTexture | null>(null)
   const [activeZone, setActiveZone] = useState<string | null>(null)
-  const [designId, setDesignId] = useState<string | null>(null)
+  const [designId, setDesignId] = useState<string | null>(initialDesignId)
+  const [designName, setDesignName] = useState('')
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [loadingDesign, setLoadingDesign] = useState(Boolean(initialDesignId))
   const images = useDesignImages(doc)
 
   const selected = useMemo(
@@ -47,13 +54,73 @@ export function CustomizerView({ blank, camera, model }: Props) {
     [selectedLayerId],
   )
 
+  const onSaved = useCallback(
+    (id: string) => {
+      setDesignId(id)
+      router.replace(`${WEB_CUSTOMIZE}/${blank.slug}?design=${encodeURIComponent(id)}`, {
+        scroll: false,
+      })
+    },
+    [blank.slug, router],
+  )
+
   useEffect(() => {
     setDoc(emptyDocForBlank(blank))
     setSelectedLayerId(null)
     setTexture(null)
     setActiveZone(null)
-    setDesignId(null)
-  }, [blank])
+    setDesignId(initialDesignId)
+    setDesignName('')
+    setLoadError(null)
+  }, [blank.slug]) // eslint-disable-line react-hooks/exhaustive-deps -- reset on blank change only
+
+  useEffect(() => {
+    if (!initialDesignId) {
+      setLoadingDesign(false)
+      return
+    }
+
+    let cancelled = false
+    setLoadingDesign(true)
+    setLoadError(null)
+
+    void (async () => {
+      try {
+        const res = await fetch(apiUrl(`${API_DESIGNS}/${initialDesignId}`), {
+          credentials: 'include',
+        })
+        const body = (await res.json().catch(() => null)) as {
+          success?: boolean
+          data?: unknown
+          error?: string
+        } | null
+        if (res.status === 401) throw new Error('Sign in to resume this design')
+        if (res.status === 403) throw new Error('This design belongs to another account')
+        if (!res.ok || !body?.success || body.data === undefined) {
+          throw new Error(body?.error ?? `Could not load design (${res.status})`)
+        }
+        const detail = designDetailSchema.parse(body.data)
+        if (detail.document.blankSlug !== blank.slug) {
+          throw new Error('Design does not match this blank')
+        }
+        if (cancelled) return
+        setDoc(detail.document)
+        setDesignId(detail.id)
+        setDesignName(detail.name ?? '')
+      } catch (e) {
+        if (!cancelled) {
+          setLoadError(e instanceof Error ? e.message : 'Could not load design')
+          setDesignId(null)
+        }
+      } finally {
+        if (!cancelled) setLoadingDesign(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [initialDesignId, blank.slug])
 
   const { widthMm, heightMm, safeMarginMm } = blank.template.printableAreaMm
 
@@ -86,6 +153,13 @@ export function CustomizerView({ blank, camera, model }: Props) {
           </header>
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 [scrollbar-gutter:stable]">
+            {loadingDesign ? (
+              <p className="px-1 text-sm text-fg-muted">Loading saved design…</p>
+            ) : loadError ? (
+              <p className="px-1 text-sm text-destructive" role="alert">
+                {loadError}
+              </p>
+            ) : null}
             <ToolsPanel
               blank={blank}
               doc={doc}
@@ -149,7 +223,8 @@ export function CustomizerView({ blank, camera, model }: Props) {
             blankSlug={blank.slug}
             doc={doc}
             designId={designId}
-            onSaved={setDesignId}
+            initialName={designName}
+            onSaved={onSaved}
           />
           <CheckoutPayBar designId={designId} blank={blank} />
         </div>

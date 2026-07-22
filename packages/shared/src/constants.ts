@@ -78,6 +78,8 @@ export const MODERATION_REVIEWER_IDS = optional('MODERATION_REVIEWER_IDS')
   .filter(Boolean)
 /** Founder inbox when a paid order hits the print gate (not every upload). */
 export const MODERATION_NOTIFY_EMAIL = optional('MODERATION_NOTIFY_EMAIL')
+/** Bulk lead inquiries; defaults to MODERATION_NOTIFY_EMAIL. */
+export const LEADS_NOTIFY_EMAIL = optional('LEADS_NOTIFY_EMAIL') || MODERATION_NOTIFY_EMAIL
 export const OPENAI_API_KEY = optional('OPENAI_API_KEY')
 /**
  * NVIDIA NIM API key (build.nvidia.com) — OpenAI-compatible fallback for moderation + semantic.
@@ -121,6 +123,9 @@ export const API_UPLOADS = '/uploads'
 export const API_CREDITS = '/credits'
 export const API_CREDITS_BALANCE = '/credits/balance'
 export const API_CREDITS_SPEND = '/credits/spend'
+export const API_CREDITS_PACKS = '/credits/packs'
+export const API_CREDITS_CHECKOUT = '/credits/checkout'
+export const API_CREDITS_CONFIRM = '/credits/confirm'
 export const API_LEADS = '/leads'
 export const API_LEADS_BULK = '/leads/bulk'
 export const API_AUTH = '/api/auth'
@@ -152,3 +157,10 @@ export const WEB_HOME = '/'
 export const WEB_CATALOG = '/catalog'
 export const WEB_CUSTOMIZE = '/customize'
 export const WEB_ORDERS = '/orders'
+export const WEB_BULK = '/bulk'
+export const WEB_ACCOUNT_CREDITS = '/account/credits'
+export const WEB_PRIVACY = '/privacy'
+export const WEB_TERMS = '/terms'
+export const WEB_SHIPPING = '/shipping'
+export const WEB_REFUND = '/refund'
+export const WEB_CONTACT = '/contact'

@@ -1,5 +1,6 @@
 'use client'
 
+import type { Route } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -14,12 +15,20 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
+import { creditBalanceSchema } from '@customarc/shared'
+import {
+  API_CREDITS_BALANCE,
+  WEB_ACCOUNT_CREDITS,
+  WEB_BULK,
+  apiUrl,
+} from '@customarc/shared/constants'
+import { authClient } from '@/lib/auth-client'
 import { AuthModal } from '@/modules/auth-modal'
+import { subscribeCreditsBalance } from '@/modules/credits'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 type SiteHeaderProps = {
-  credits?: number
   cartCount?: number
 }
 
@@ -80,8 +89,10 @@ const mobileNavLinkClass = cn(
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
 )
 
-export function SiteHeader({ credits = 12, cartCount = 2 }: SiteHeaderProps) {
+export function SiteHeader({ cartCount = 2 }: SiteHeaderProps) {
   const pathname = usePathname()
+  const { data: session } = authClient.useSession()
+  const [credits, setCredits] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
   const [megaOpen, setMegaOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
@@ -89,6 +100,33 @@ export function SiteHeader({ credits = 12, cartCount = 2 }: SiteHeaderProps) {
   const lastFocus = useRef<HTMLElement | null>(null)
   const menuId = useId()
   const onCatalog = pathname.startsWith('/catalog') || pathname.startsWith('/customize')
+
+  useEffect(() => {
+    if (!session?.user) {
+      setCredits(null)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await fetch(apiUrl(API_CREDITS_BALANCE), { credentials: 'include' })
+        const body = (await res.json().catch(() => null)) as {
+          success?: boolean
+          data?: unknown
+        } | null
+        if (!res.ok || !body?.success || body.data === undefined) return
+        const bal = creditBalanceSchema.parse(body.data)
+        if (!cancelled) setCredits(bal.balance)
+      } catch {
+        if (!cancelled) setCredits(null)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [session?.user?.id])
+
+  useEffect(() => subscribeCreditsBalance(setCredits), [])
 
   function openAuth(mode: AuthMode = 'sign-up') {
     setAuthMode(mode)
@@ -148,7 +186,11 @@ export function SiteHeader({ credits = 12, cartCount = 2 }: SiteHeaderProps) {
     setOpen(true)
   }
 
-  const creditsLabel = `Credits balance: ${credits} credits remaining`
+  const creditsDisplay = credits === null ? '—' : String(credits)
+  const creditsLabel =
+    credits === null
+      ? 'Credits — sign in to view balance'
+      : `Credits balance: ${credits} credits remaining`
   const cartLabel = `Cart, ${cartCount} items`
 
   return (
@@ -169,12 +211,12 @@ export function SiteHeader({ credits = 12, cartCount = 2 }: SiteHeaderProps) {
         >
           <div className="flex min-w-0 items-center justify-start gap-3">
             <Link
-              href="/account/credits"
+              href={WEB_ACCOUNT_CREDITS as Route}
               aria-label={creditsLabel}
               className={cn(creditsClass, 'hidden md:inline-flex')}
             >
               <Coins {...iconProps} size={15} className="size-[15px] shrink-0 opacity-90" />
-              <span>{credits}</span>
+              <span>{creditsDisplay}</span>
             </Link>
             <button
               type="button"
@@ -340,7 +382,7 @@ export function SiteHeader({ credits = 12, cartCount = 2 }: SiteHeaderProps) {
             >
               Customize
             </Link>
-            <Link href="/#bulk" className={navLinkClass}>
+            <Link href={WEB_BULK as Route} className={navLinkClass}>
               Bulk orders
             </Link>
           </div>
@@ -368,13 +410,13 @@ export function SiteHeader({ credits = 12, cartCount = 2 }: SiteHeaderProps) {
         >
           <div className="mb-4 flex flex-wrap items-center gap-3 border-b border-border pb-4">
             <Link
-              href="/account/credits"
+              href={WEB_ACCOUNT_CREDITS as Route}
               aria-label={creditsLabel}
               onClick={closeMenu}
               className={creditsClass}
             >
               <Coins {...iconProps} size={15} className="size-[15px] shrink-0 opacity-90" />
-              <span>{credits}</span>
+              <span>{creditsDisplay}</span>
             </Link>
             <button type="button" aria-label="Search catalog" className={iconBtnClass}>
               <Search {...iconProps} />
@@ -425,7 +467,7 @@ export function SiteHeader({ credits = 12, cartCount = 2 }: SiteHeaderProps) {
           <Link href="/catalog" onClick={closeMenu} className={mobileNavLinkClass}>
             Customize
           </Link>
-          <Link href="/#bulk" onClick={closeMenu} className={mobileNavLinkClass}>
+          <Link href={WEB_BULK as Route} onClick={closeMenu} className={mobileNavLinkClass}>
             Bulk orders
           </Link>
           <div className="my-4 h-px bg-border" />

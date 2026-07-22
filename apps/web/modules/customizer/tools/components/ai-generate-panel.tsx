@@ -6,6 +6,7 @@ import { generationResultSchema } from '@customarc/shared'
 import { API_AI_GENERATE, apiUrl } from '@customarc/shared/constants'
 import { authClient } from '@/lib/auth-client'
 import { AuthModal } from '@/modules/auth-modal'
+import { publishCreditsBalance } from '@/modules/credits'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -81,6 +82,7 @@ export function AiGeneratePanel({
       const layer = makeAiImageLayer(result.upload, doc.template)
       onDocChange({ ...doc, layers: [...doc.layers, layer] })
       onSelectLayer(layer.id)
+      publishCreditsBalance(result.balance)
       setOk(`Wrapped · ${result.creditsCost} credit · balance ${result.balance}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Generate failed')

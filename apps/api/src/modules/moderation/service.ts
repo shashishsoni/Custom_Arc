@@ -174,7 +174,7 @@ export class ModerationService {
     }
   }
 
-  /** Blocklist → semantic IP → content-safety. Clean → approved. */
+  /** Blocklist (hard only) → semantic (block NSFW only) → content-safety. */
   private async runTextPipeline(
     text: string,
     opts: { semantic: boolean },
@@ -184,7 +184,8 @@ export class ModerationService {
 
     if (opts.semantic) {
       const semantic = await semanticPromptCheck(text)
-      if (semantic && semantic.verdict !== 'approved') return semantic
+      // Soft flags are already mapped to approved; only hard blocks stop generation.
+      if (semantic?.verdict === 'blocked') return semantic
     }
 
     const ai = await moderateContent({ text })

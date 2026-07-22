@@ -22,15 +22,17 @@ const CustomizerView = dynamic(
 
 export type CustomizerProps = {
   blank: Blank
+  initialDesignId?: string | null
   camera?: CustomizerCamera
   model?: CustomizerModelPose
 }
 
-export function Customizer({ blank, camera, model }: CustomizerProps) {
+export function Customizer({ blank, initialDesignId = null, camera, model }: CustomizerProps) {
   const preset = viewForSlug(blank.slug)
   return (
     <CustomizerView
       blank={blank}
+      initialDesignId={initialDesignId}
       camera={camera ?? preset.camera}
       model={model ?? preset.model}
     />

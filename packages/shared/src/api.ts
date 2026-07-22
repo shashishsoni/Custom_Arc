@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { designDocumentSchema } from './design-document'
 
 /** API envelope + cross-cutting request/response contracts (spec §7.5 — strict validation at boundaries). */
 
@@ -57,6 +58,15 @@ export const savedDesignSchema = z.object({
   name: z.string().nullable(),
 })
 export type SavedDesign = z.infer<typeof savedDesignSchema>
+
+/** GET /designs/:id — full document for resume. */
+export const designDetailSchema = z.object({
+  id: z.string().min(1),
+  blankId: z.string().min(1),
+  name: z.string().nullable(),
+  document: designDocumentSchema,
+})
+export type DesignDetail = z.infer<typeof designDetailSchema>
 
 export const orderStateSchema = z.enum([
   'designing',
@@ -154,4 +164,41 @@ export const printGateResultSchema = z.object({
   reasons: z.array(z.string()),
 })
 export type PrintGateResult = z.infer<typeof printGateResultSchema>
+
+/** GET /credits/packs · POST /credits/checkout */
+export const creditPackSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  credits: z.number().int().positive(),
+  priceMinor: z.number().int().positive(),
+  currency: z.string().min(1),
+})
+export type CreditPack = z.infer<typeof creditPackSchema>
+
+export const creditCheckoutSessionSchema = z.object({
+  mode: z.enum(['razorpay', 'mock']),
+  amountMinor: z.number().int().positive(),
+  currency: z.string().min(1),
+  razorpayOrderId: z.string().min(1),
+  razorpayKeyId: z.string().optional(),
+  packId: z.string().min(1),
+  credits: z.number().int().positive(),
+})
+export type CreditCheckoutSession = z.infer<typeof creditCheckoutSessionSchema>
+
+export const creditConfirmRequestSchema = z.discriminatedUnion('mode', [
+  z.object({
+    mode: z.literal('razorpay'),
+    packId: z.string().min(1),
+    razorpayOrderId: z.string().min(1),
+    razorpayPaymentId: z.string().min(1),
+    razorpaySignature: z.string().min(1),
+  }),
+  z.object({
+    mode: z.literal('mock'),
+    packId: z.string().min(1),
+    razorpayOrderId: z.string().min(1),
+  }),
+])
+export type CreditConfirmRequest = z.infer<typeof creditConfirmRequestSchema>
 
