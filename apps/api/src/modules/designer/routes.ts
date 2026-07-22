@@ -12,11 +12,19 @@ export const designerRoutes = new Elysia({ prefix: API_DESIGNS })
   )
   .post(
     '/',
-    async ({ body, user }) => ok(await designerService.save({ userId: user.id, ...body })),
+    async ({ body, user }) =>
+      ok(
+        await designerService.save({
+          userId: user.id,
+          blankId: body.blankId,
+          document: body.document,
+          ...(body.name !== undefined ? { name: body.name } : {}),
+        }),
+      ),
     {
       body: t.Object({
         blankId: t.String(),
-        document: t.Unknown(),
+        document: t.Any(),
         name: t.Optional(t.String()),
       }),
     },
@@ -24,8 +32,18 @@ export const designerRoutes = new Elysia({ prefix: API_DESIGNS })
   .patch(
     '/:id',
     async ({ params, body, user }) =>
-      ok(await designerService.updateForUser(params.id, user.id, body.document, body.name)),
+      ok(
+        await designerService.updateForUser(
+          params.id,
+          user.id,
+          body.document,
+          body.name !== undefined ? body.name : undefined,
+        ),
+      ),
     {
-      body: t.Object({ document: t.Unknown(), name: t.Optional(t.String()) }),
+      body: t.Object({
+        document: t.Any(),
+        name: t.Optional(t.String()),
+      }),
     },
   )
