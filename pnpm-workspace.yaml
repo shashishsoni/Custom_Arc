@@ -2,6 +2,15 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# Keep the pnpm 11 supply-chain gate on (minutes). Do NOT set this to 0.
+# Auto-repair: scripts/pnpm-install-with-age-repair.mjs (used by Vercel installCommand).
+minimumReleaseAge: 1440
+
+# Org-backed packages that ship near-daily. Expand via the repair script when needed;
+# never blanket-disable the age gate for arbitrary packages.
+minimumReleaseAgeExclude:
+  - "@aws-sdk/*"
+
 allowBuilds:
   '@prisma/engines': true
   esbuild: true

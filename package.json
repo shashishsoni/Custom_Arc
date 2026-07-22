@@ -9,6 +9,9 @@
   },
   "scripts": {
     "install:all": "pnpm install",
+    "deps:install": "node scripts/pnpm-install-with-age-repair.mjs",
+    "deps:repair-age": "node scripts/repair-pnpm-release-age.mjs",
+    "deps:audit": "pnpm audit --prod --audit-level=high",
     "build": "turbo build",
     "dev": "turbo dev",
     "start": "turbo start",
