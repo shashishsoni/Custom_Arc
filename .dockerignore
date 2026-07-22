@@ -1,15 +1,24 @@
 .git
 .github
+.cursor
+.agents
+.neon
+docs
 **/.next
 **/node_modules
 **/dist
 **/.turbo
+**/*.log
 .env
 .env.*
 !.env.example
 *.md
-docs
-.cursor
-.agents
-**/*.log
-.neon
+skills-lock.json
+
+# Web app source not needed for API image (keep package.json for workspace)
+apps/web/**
+!apps/web/package.json
+
+# Local / editor noise
+**/.DS_Store
+**/Thumbs.db
