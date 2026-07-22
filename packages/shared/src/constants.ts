@@ -116,6 +116,7 @@ export function assertServerEnv(): void {
 // ─── API route paths (Elysia prefixes + fetch targets) ────────────
 
 export const API_HEALTH = '/health'
+export const API_ALIVE = '/alive'
 export const API_CATALOG = '/catalog'
 export const API_CATALOG_BLANKS = '/catalog/blanks'
 export const API_DESIGNS = '/designs'

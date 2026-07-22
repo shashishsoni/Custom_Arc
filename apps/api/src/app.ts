@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia'
 import { cors } from '@elysiajs/cors'
-import { err } from '@customarc/shared'
-import { WEB_BASE_URL, LOG_LEVEL, API_HEALTH } from '@customarc/shared/constants'
+import { err, ok } from '@customarc/shared'
+import { WEB_BASE_URL, LOG_LEVEL, API_ALIVE, API_HEALTH } from '@customarc/shared/constants'
 import { logger } from './logger.ts'
 import { ApiError } from './errors.ts'
 import { authPlugin } from './modules/auth/plugin.ts'
@@ -17,6 +17,16 @@ import { moderationRoutes } from './modules/moderation/routes.ts'
 import { fulfillmentWebhookRoutes, orderTrackingRoutes } from './modules/tracking/routes.ts'
 import { aiRoutes } from './modules/ai/routes.ts'
 
+function aliveStatus() {
+  return ok({
+    alive: true,
+    status: 'ok',
+    service: 'customarc-api',
+    timestamp: new Date().toISOString(),
+    logLevel: LOG_LEVEL,
+  })
+}
+
 /** The composed API. Routes are thin adapters over module services; errors map to one envelope. */
 export const app = new Elysia()
   .use(
@@ -27,6 +37,9 @@ export const app = new Elysia()
       allowedHeaders: ['Content-Type', 'Authorization', 'x-fulfillment-secret'],
     }),
   )
+  // Liveness first — no auth / DB. Use for uptime checks.
+  .get(API_HEALTH, aliveStatus)
+  .get(API_ALIVE, aliveStatus)
   .use(authPlugin)
   .use(catalogRoutes)
   .use(designerRoutes)
@@ -40,7 +53,6 @@ export const app = new Elysia()
   .use(moderationRoutes)
   .use(aiRoutes)
   .use(fulfillmentWebhookRoutes)
-  .get(API_HEALTH, () => ({ status: 'ok', service: 'customarc-api', env: LOG_LEVEL }))
   .onError(({ code, error, set }) => {
     if (error instanceof ApiError) {
       set.status = error.statusCode
