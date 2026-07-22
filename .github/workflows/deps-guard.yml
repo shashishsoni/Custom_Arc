@@ -1,5 +1,5 @@
-# Verify install + supply-chain policy before merge / deploy.
-# Security: keeps minimumReleaseAge; auto-repair never disables the gate.
+# Verify install + production audit before merge / deploy.
+# Dependabot handles version updates; this job only checks install + audit.
 name: deps-guard
 
 on:
@@ -9,9 +9,6 @@ on:
       - "pnpm-workspace.yaml"
       - "package.json"
       - "**/package.json"
-      - "scripts/pnpm-install-with-age-repair.mjs"
-      - "scripts/repair-pnpm-release-age.mjs"
-      - "scripts/lib/pnpm-age-policy.mjs"
       - ".github/workflows/deps-guard.yml"
   push:
     branches: [main, master]
@@ -41,17 +38,8 @@ jobs:
       - name: Enable Corepack (pnpm from packageManager)
         run: corepack enable
 
-      - name: Install (with age-gate auto-repair)
-        run: node scripts/pnpm-install-with-age-repair.mjs
-
-      - name: Detect uncommitted policy/lockfile repair
-        run: |
-          if [ -n "$(git status --porcelain pnpm-workspace.yaml pnpm-lock.yaml)" ]; then
-            echo "::error::Install repair mutated pnpm-workspace.yaml and/or pnpm-lock.yaml."
-            echo "Commit those files so Vercel does not rely on ephemeral repair."
-            git --no-pager diff -- pnpm-workspace.yaml pnpm-lock.yaml
-            exit 1
-          fi
+      - name: Install
+        run: pnpm install
 
       - name: Production vulnerability audit
         run: pnpm audit --prod --audit-level=high

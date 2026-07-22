@@ -1,17 +1,8 @@
-# Dependabot version updates + supply-chain alignment with pnpm 11.
-# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Dependabot version updates. Docs:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 #
-# Playbook (any ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION / lockfile policy failure):
-#   1. Prefer waiting or pinning a mature version (security-preserving).
-#   2. Trusted high-churn org scopes only → minimumReleaseAgeExclude in
-#      pnpm-workspace.yaml (see scripts/lib/pnpm-age-policy.mjs).
-#   3. Never set minimumReleaseAge: 0. Never exclude unknown packages by hand
-#      without review — use `pnpm deps:repair-age` from the install log.
-#   4. Commit pnpm-workspace.yaml + pnpm-lock.yaml together; regenerate with the
-#      same pnpm major as package.json#packageManager.
-#   5. Vercel uses `node scripts/pnpm-install-with-age-repair.mjs` (vercel.json)
-#      so deploys auto-repair once; still commit the result to keep builds fast.
-#   6. Security updates ignore cooldown and should still merge promptly after CI.
+# Install is plain `pnpm install` (no age-repair scripts).
+# Security: Dependabot updates + CI `pnpm audit --prod` in deps-guard.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -24,13 +15,11 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "deps"
-    # Stay ahead of pnpm's 1440-minute gate for routine version bumps.
     cooldown:
       default-days: 3
       semver-major-days: 7
       semver-minor-days: 3
       semver-patch-days: 3
-      # High-churn org scopes already (or auto) excluded from the age gate.
       exclude:
         - "@aws-sdk/*"
         - "@aws-crypto/*"
