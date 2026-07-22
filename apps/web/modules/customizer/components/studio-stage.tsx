@@ -3,11 +3,9 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import type { DesignTexture } from '../design/design-texture'
 import { cn } from '@/lib/utils'
+import { STUDIO_STAGE_BG } from '@/lib/studio-stage-bg'
 
-/** Same wash as the home hero — shared across StudioStage surfaces. */
-export const STUDIO_STAGE_BG =
-  'bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_60%,var(--bg))_0%,var(--bg)_50%,color-mix(in_srgb,var(--accent-warm)_80%,var(--bg))_100%)]'
-
+export { STUDIO_STAGE_BG } from '@/lib/studio-stage-bg'
 export type StudioStageProps = {
   children: ReactNode
   title?: string

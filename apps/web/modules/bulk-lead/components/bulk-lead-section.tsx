@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils'
+import { STUDIO_STAGE_BG } from '@/lib/studio-stage-bg'
 import { BulkLeadForm } from './bulk-lead-form'
 import { COPY, SECTION_ID, TITLE_ID } from '../data'
 
@@ -6,7 +8,10 @@ export function BulkLeadSection() {
     <section
       id={SECTION_ID}
       aria-labelledby={TITLE_ID}
-      className="scroll-mt-[var(--header-h)] relative w-full overflow-x-clip bg-[radial-gradient(ellipse_80%_100%_at_12%_0%,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_55%),linear-gradient(180deg,var(--bg),color-mix(in_srgb,var(--accent-warm)_6%,var(--bg)))]"
+      className={cn(
+        'scroll-mt-[var(--header-h)] relative flex min-h-[calc(100dvh-var(--header-h))] w-full flex-col justify-center overflow-x-clip',
+        STUDIO_STAGE_BG,
+      )}
     >
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-[clamp(3.5rem,9vw,6.5rem)] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-end md:gap-14 md:px-6">
         <div>

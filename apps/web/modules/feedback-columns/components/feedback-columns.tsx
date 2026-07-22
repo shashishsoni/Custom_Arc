@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
+import { cn } from '@/lib/utils'
+import { STUDIO_STAGE_BG } from '@/lib/studio-stage-bg'
 import { ColumnsWall } from './columns-wall'
 import { SAMPLE_REVIEWS, type Review } from '../data'
 import { FeedbackPanel } from './feedback-panel'
@@ -27,7 +29,7 @@ export function FeedbackColumns() {
 
   return (
     <section
-      className="relative w-full overflow-x-clip bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_60%,var(--bg))_0%,var(--bg)_100%)]"
+      className={cn('relative w-full overflow-x-clip', STUDIO_STAGE_BG)}
       aria-labelledby={TITLE_ID}
     >
       <div className="mx-auto w-full max-w-7xl px-4 pt-[clamp(4.5rem,10vw,9rem)] pb-[clamp(5.25rem,10vw,9.5rem)] md:px-6">
