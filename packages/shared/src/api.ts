@@ -39,6 +39,17 @@ export const uploadResultSchema = z.object({
 })
 export type UploadResult = z.infer<typeof uploadResultSchema>
 
+/** POST /ai/generate — prompt → image wrapped as an Upload on the design. */
+export const generationResultSchema = z.object({
+  id: z.string().min(1),
+  prompt: z.string().min(1),
+  provider: z.string().min(1),
+  creditsCost: z.number().int().positive(),
+  balance: z.number().int().nonnegative(),
+  upload: uploadResultSchema,
+})
+export type GenerationResult = z.infer<typeof generationResultSchema>
+
 /** POST/PATCH /designs — id used for subsequent patches. */
 export const savedDesignSchema = z.object({
   id: z.string().min(1),

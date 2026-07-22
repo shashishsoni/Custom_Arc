@@ -15,6 +15,7 @@ import { billingRoutes } from './modules/billing/routes.ts'
 import { printFileRoutes } from './modules/print-files/routes.ts'
 import { moderationRoutes } from './modules/moderation/routes.ts'
 import { fulfillmentWebhookRoutes, orderTrackingRoutes } from './modules/tracking/routes.ts'
+import { aiRoutes } from './modules/ai/routes.ts'
 
 /** The composed API. Routes are thin adapters over module services; errors map to one envelope. */
 export const app = new Elysia()
@@ -37,6 +38,7 @@ export const app = new Elysia()
   .use(billingRoutes)
   .use(printFileRoutes)
   .use(moderationRoutes)
+  .use(aiRoutes)
   .use(fulfillmentWebhookRoutes)
   .get(API_HEALTH, () => ({ status: 'ok', service: 'customarc-api', env: LOG_LEVEL }))
   .onError(({ code, error, set }) => {

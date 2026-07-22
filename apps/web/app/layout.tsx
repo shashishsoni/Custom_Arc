@@ -31,9 +31,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       data-scroll-behavior="smooth"
       className={cn(outfit.variable, playfair.variable, 'font-sans')}
     >
-      <body>
+      <body className="overflow-x-clip">
         <SiteHeader />
-        <div className="mx-auto w-full max-w-content px-4 md:px-6">{children}</div>
+        {children}
         <SiteFooter />
         <Toaster richColors position="top-center" />
       </body>

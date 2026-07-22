@@ -5,7 +5,7 @@ const TITLE_ID = 'generation-trace-title'
 export function GenerationTrace() {
   return (
     <section
-      className="relative left-1/2 w-screen -translate-x-1/2 overflow-x-clip border-b-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_80%,var(--bg))_0%,var(--bg)_100%)]"
+      className="relative w-full overflow-x-clip border-b-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_80%,var(--bg))_0%,var(--bg)_100%)]"
       aria-labelledby={TITLE_ID}
     >
       <div className="mx-auto w-full max-w-7xl px-4 pt-[clamp(4.5rem,10vw,9rem)] pb-[clamp(5.25rem,10vw,9.5rem)] md:px-6">

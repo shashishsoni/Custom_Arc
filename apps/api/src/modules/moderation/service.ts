@@ -1,9 +1,6 @@
 import type { ModerationFlag, ModerationVerdict } from '@customarc/db'
 import { parseDesignDocument, type DesignDocument } from '@customarc/shared'
-import {
-  MODERATION_AUTO_APPROVE,
-  MODERATION_REVIEWER_IDS,
-} from '@customarc/shared/constants'
+import { MODERATION_REVIEWER_IDS } from '@customarc/shared/constants'
 import { badRequest, forbidden, notFound } from '../../errors.ts'
 import { logger } from '../../logger.ts'
 import { designerRepo } from '../designer/repo.ts'
@@ -24,7 +21,11 @@ export type PrintGateResult = {
 
 type LayerVerdict = { verdict: ModerationVerdict; reasons: string[] }
 
-/** Issue 13 + 19 — layered moderation; hard-block print until approved. */
+/**
+ * AI auto-moderation (issues 13 + 19).
+ * Clean → approved · negative → flagged/blocked with reasons in DB.
+ * No manual queue — scale-safe. Founder review route remains for rare overrides.
+ */
 export class ModerationService {
   constructor(
     private readonly repo = moderationRepo,
@@ -47,45 +48,19 @@ export class ModerationService {
     return result.verdict
   }
 
-  /** Called after upload create — blocklist N/A; OpenAI image when keyed. */
+  /** Upload create — AI scores image; auto approve or reject + store reasons. */
   async reviewUpload(uploadId: string): Promise<ModerationFlag> {
     const upload = await uploadsRepo.getById(uploadId)
     if (!upload) throw notFound('Upload not found')
 
-    let verdict: ModerationVerdict = MODERATION_AUTO_APPROVE ? 'approved' : 'pending'
-    const reasons: string[] = []
-
-    try {
-      const { body, contentType } = await readUploadObject(upload.storageKey)
-      const ai = await moderateContent({
-        image: { bytes: body, mimeType: contentType || upload.mimeType },
-      })
-      if (ai) {
-        verdict = ai.verdict === 'approved' && !MODERATION_AUTO_APPROVE ? 'pending' : ai.verdict
-        reasons.push(...ai.reasons)
-        if (ai.verdict === 'approved' && !MODERATION_AUTO_APPROVE) {
-          reasons.push('awaiting_review')
-        }
-      } else if (!MODERATION_AUTO_APPROVE) {
-        reasons.push('awaiting_review')
-      }
-    } catch (e) {
-      logger.warn('upload moderation read failed', {
-        uploadId,
-        err: e instanceof Error ? e.message : String(e),
-      })
-      verdict = 'flagged'
-      reasons.push('upload:unreadable')
-    }
-
+    const { verdict, reasons } = await this.scoreUpload(upload.storageKey, upload.mimeType)
     const flag = await this.repo.createUploadFlag({ uploadId, verdict, reasons })
-    if (verdict === 'approved') await this.repo.setUploadStatus(uploadId, 'approved')
-    else if (verdict === 'blocked' || verdict === 'flagged') {
+
+    if (verdict === 'approved') {
+      await this.repo.setUploadStatus(uploadId, 'approved')
+    } else {
       await this.repo.setUploadStatus(uploadId, 'flagged')
-      void notifyFounderHold({
-        designId: `upload:${uploadId}`,
-        reasons: reasons.length ? reasons : [verdict],
-      })
+      logger.warn('upload rejected by moderation', { uploadId, verdict, reasons })
     }
     return flag
   }
@@ -116,13 +91,13 @@ export class ModerationService {
 
     for (const layer of doc.layers) {
       if (layer.type === 'text') {
-        const textResult = await this.runTextPipeline(layer.text, { semantic: false })
+        const textResult = await this.runTextPipeline(layer.text, { semantic: true })
         if (textResult.verdict !== 'approved') {
-          const tagged =
-            textResult.reasons.length > 0
+          reasons.push(
+            ...(textResult.reasons.length
               ? textResult.reasons.map((r) => `text:${layer.id}:${r}`)
-              : [`text:${layer.id}:${textResult.verdict}`]
-          reasons.push(...tagged)
+              : [`text:${layer.id}:${textResult.verdict}`]),
+          )
         }
       }
       if (layer.type === 'image') {
@@ -132,7 +107,10 @@ export class ModerationService {
         }
         const flag = await this.ensureUploadFlag(layer.uploadId)
         if (!flag || flag.verdict !== 'approved') {
-          reasons.push(`upload:${layer.uploadId}:${flag?.verdict ?? 'pending'}`)
+          reasons.push(`upload:${layer.uploadId}:${flag?.verdict ?? 'missing'}`)
+          if (flag?.reasons.length) {
+            reasons.push(...flag.reasons.map((r) => `upload:${layer.uploadId}:${r}`))
+          }
         }
       }
     }
@@ -147,6 +125,7 @@ export class ModerationService {
     return this.checkPrintGate(designId)
   }
 
+  /** Rare override — false-positive rescue only. */
   async reviewFlag(
     flagId: string,
     reviewerId: string,
@@ -171,7 +150,31 @@ export class ModerationService {
     return updated
   }
 
-  /** Layer 1 blocklist → optional semantic → OpenAI text moderation. */
+  private async scoreUpload(
+    storageKey: string,
+    mimeType: string,
+  ): Promise<LayerVerdict> {
+    try {
+      const { body, contentType } = await readUploadObject(storageKey)
+      const ai = await moderateContent({
+        image: { bytes: body, mimeType: contentType || mimeType },
+      })
+      if (!ai) {
+        return { verdict: 'flagged', reasons: ['ai:unavailable'] }
+      }
+      if (ai.verdict === 'approved') {
+        return { verdict: 'approved', reasons: ai.reasons.length ? ai.reasons : ['ai:clean'] }
+      }
+      return { verdict: ai.verdict, reasons: ai.reasons }
+    } catch (e) {
+      logger.warn('upload moderation read failed', {
+        err: e instanceof Error ? e.message : String(e),
+      })
+      return { verdict: 'flagged', reasons: ['upload:unreadable'] }
+    }
+  }
+
+  /** Blocklist → semantic IP → content-safety. Clean → approved. */
   private async runTextPipeline(
     text: string,
     opts: { semantic: boolean },
@@ -193,7 +196,6 @@ export class ModerationService {
   private async ensureUploadFlag(uploadId: string): Promise<ModerationFlag | null> {
     const existing = await this.repo.getByUploadId(uploadId)
     if (existing) return existing
-    if (!MODERATION_AUTO_APPROVE) return null
     return this.reviewUpload(uploadId)
   }
 }

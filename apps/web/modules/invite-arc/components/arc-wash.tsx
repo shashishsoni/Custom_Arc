@@ -3,7 +3,7 @@ export function ArcWash() {
     <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_55%,transparent)_0%,transparent_28%,transparent_72%,color-mix(in_srgb,var(--card)_42%,transparent)_100%)]" />
       <svg
-        className="absolute top-[clamp(8px,2vw,28px)] left-1/2 h-[clamp(180px,34vw,320px)] w-[min(1180px,118%)] -translate-x-1/2 overflow-visible"
+        className="absolute top-[clamp(8px,2vw,28px)] left-1/2 h-[clamp(180px,34vw,320px)] w-[min(1180px,100%)] -translate-x-1/2 overflow-hidden"
         viewBox="0 0 1180 280"
         preserveAspectRatio="xMidYMid meet"
         role="presentation"

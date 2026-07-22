@@ -8,7 +8,7 @@ export function SiteFooter() {
     <footer
       id="site-footer"
       aria-labelledby={TITLE_ID}
-      className="relative w-full overflow-hidden border-t border-[color-mix(in_srgb,var(--accent-2)_22%,var(--border))] bg-[radial-gradient(ellipse_90%_120%_at_18%_50%,color-mix(in_srgb,var(--accent)_7%,transparent),transparent_62%),radial-gradient(ellipse_70%_90%_at_88%_40%,color-mix(in_srgb,var(--accent-warm)_14%,transparent),transparent_58%),linear-gradient(105deg,color-mix(in_srgb,var(--accent)_4%,var(--bg))_0%,var(--bg)_38%,color-mix(in_srgb,var(--accent-warm)_10%,var(--bg))_100%)]"
+      className="relative w-full overflow-x-clip bg-[radial-gradient(ellipse_90%_120%_at_18%_50%,color-mix(in_srgb,var(--accent)_7%,transparent),transparent_62%),radial-gradient(ellipse_70%_90%_at_88%_40%,color-mix(in_srgb,var(--accent-warm)_14%,transparent),transparent_58%),linear-gradient(105deg,color-mix(in_srgb,var(--accent)_4%,var(--bg))_0%,var(--bg)_38%,color-mix(in_srgb,var(--accent-warm)_10%,var(--bg))_100%)]"
     >
       <div
         aria-hidden

@@ -11,12 +11,14 @@ export function defaultImageTransform(
   heightMm: number,
   naturalW: number,
   naturalH: number,
+  scale = 0.22,
 ): LayerTransform {
   const aspect = naturalW / Math.max(1, naturalH)
-  let w = widthMm * 0.22
+  let w = widthMm * scale
   let h = w / aspect
-  if (h > heightMm * 0.28) {
-    h = heightMm * 0.28
+  const maxH = heightMm * Math.min(0.85, scale + 0.1)
+  if (h > maxH) {
+    h = maxH
     w = h * aspect
   }
   return {
@@ -32,6 +34,7 @@ export function defaultImageTransform(
 export function makeImageLayer(
   upload: { id: string; previewUrl: string; widthPx: number; heightPx: number },
   template: { widthMm: number; heightMm: number },
+  scale = 0.22,
 ): ImageLayer {
   return {
     id: crypto.randomUUID(),
@@ -45,8 +48,17 @@ export function makeImageLayer(
       template.heightMm,
       upload.widthPx,
       upload.heightPx,
+      scale,
     ),
   }
+}
+
+/** AI wrap — larger coverage of the printable area. */
+export function makeAiImageLayer(
+  upload: { id: string; previewUrl: string; widthPx: number; heightPx: number },
+  template: { widthMm: number; heightMm: number },
+): ImageLayer {
+  return makeImageLayer(upload, template, 0.72)
 }
 
 export function makeTextLayer(

@@ -156,11 +156,11 @@
   }
 
   html {
-    @apply scroll-smooth font-sans antialiased;
+    @apply scroll-smooth font-sans antialiased overflow-x-clip;
   }
 
   body {
-    @apply min-h-screen bg-bg text-fg;
+    @apply min-h-screen overflow-x-clip bg-bg text-fg;
     /* Multi-stop brand wash — hard to express cleanly in utilities alone */
     background-image:
       radial-gradient(ellipse 95% 55% at 48% -8%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 56%),

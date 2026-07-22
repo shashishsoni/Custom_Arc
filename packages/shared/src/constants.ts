@@ -53,6 +53,10 @@ export const R2_ENABLED = Boolean(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET
 export const FAL_KEY = optional('FAL_KEY')
 export const CLOUDFLARE_ACCOUNT_ID = optional('CLOUDFLARE_ACCOUNT_ID')
 export const CLOUDFLARE_AI_TOKEN = optional('CLOUDFLARE_AI_TOKEN')
+/** Credits debited per AI generation (idempotent by generation id). */
+export const AI_GENERATION_CREDIT_COST = Number(optional('AI_GENERATION_CREDIT_COST', '1')) || 1
+export const FAL_ENABLED = Boolean(FAL_KEY)
+export const CLOUDFLARE_AI_ENABLED = Boolean(CLOUDFLARE_ACCOUNT_ID && CLOUDFLARE_AI_TOKEN)
 
 export const RAZORPAY_KEY_ID = optional('RAZORPAY_KEY_ID')
 export const RAZORPAY_KEY_SECRET = optional('RAZORPAY_KEY_SECRET')
@@ -65,14 +69,14 @@ export const RAZORPAY_MIN_AMOUNT_PAISE = 100
 export const PRINT_PARTNER = optional('PRINT_PARTNER', 'qikink')
 export const PRINT_PARTNER_API_KEY = optional('PRINT_PARTNER_API_KEY')
 
-/** Auto-approve uploads when true (default). Set false + reviewer ids for manual gate. */
+/** @deprecated Unused — moderation is AI auto approve/reject. Kept for env compat. */
 export const MODERATION_AUTO_APPROVE = optional('MODERATION_AUTO_APPROVE', 'true') === 'true'
-/** Comma-separated user ids allowed to POST /moderation/flags/:id/review. */
+/** Comma-separated user ids allowed to POST /moderation/flags/:id/review (rare override). */
 export const MODERATION_REVIEWER_IDS = optional('MODERATION_REVIEWER_IDS')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean)
-/** Founder inbox for print-hold / flagged upload emails (issue 19). */
+/** Founder inbox when a paid order hits the print gate (not every upload). */
 export const MODERATION_NOTIFY_EMAIL = optional('MODERATION_NOTIFY_EMAIL')
 export const OPENAI_API_KEY = optional('OPENAI_API_KEY')
 /**
@@ -126,6 +130,8 @@ export const API_BILLING_WEBHOOK = '/billing/webhook'
 export const API_PRINT_FILES = '/print-files'
 export const API_MODERATION = '/moderation'
 export const API_FULFILLMENT = '/fulfillment'
+export const API_AI = '/ai'
+export const API_AI_GENERATE = '/ai/generate'
 
 /** Sandbox partner when API key unset (issue 17 first proof). */
 export const PRINT_PARTNER_SANDBOX = !PRINT_PARTNER_API_KEY

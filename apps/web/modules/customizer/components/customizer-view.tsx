@@ -89,6 +89,7 @@ export function CustomizerView({ blank, camera, model }: Props) {
             <ToolsPanel
               blank={blank}
               doc={doc}
+              designId={designId}
               selectedLayerId={selectedLayerId}
               onDocChange={setDoc}
               onSelectLayer={setSelectedLayerId}

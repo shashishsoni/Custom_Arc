@@ -9,7 +9,7 @@ export default async function CatalogPage() {
   const blanks = await listBlanks().catch(() => [])
 
   return (
-    <main id="main" className="py-10 pb-16">
+    <main id="main" className="mx-auto w-full max-w-7xl px-4 py-10 pb-16 md:px-6">
       <h2 className="mb-2 font-heading text-[clamp(2.5rem,6vw,4.5rem)] leading-[0.95] font-semibold tracking-tight text-fg">
         Catalog
       </h2>

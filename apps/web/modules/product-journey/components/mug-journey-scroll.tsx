@@ -201,7 +201,7 @@ export function MugJourneyScroll() {
     <section
       ref={sectionRef}
       aria-label="From blank mug to packed custom product"
-      className="relative left-1/2 h-[400vh] w-screen -translate-x-1/2 bg-[#bba29a] motion-reduce:h-[120vh]"
+      className="relative h-[400vh] w-full overflow-x-clip bg-[#bba29a] motion-reduce:h-[120vh]"
     >
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#bba29a]">
         <canvas
