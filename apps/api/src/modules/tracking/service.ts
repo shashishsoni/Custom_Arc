@@ -1,5 +1,5 @@
 import type { Order } from '@customarc/db'
-import type { OrderState } from '@customarc/shared'
+import type { FulfillmentWebhookEvent, OrderState } from '@customarc/shared'
 import {
   FULFILLMENT_WEBHOOK_SECRET,
   IS_DEVELOPMENT,
@@ -10,12 +10,7 @@ import { logger } from '../../logger.ts'
 import { assertTransition } from '../orders/transitions.ts'
 import { trackingRepo } from './repo.ts'
 
-export type PartnerTrackingEvent = {
-  event: 'shipped' | 'delivered'
-  partnerOrderId: string
-  trackingNumber?: string
-  carrier?: string
-}
+export type PartnerTrackingEvent = FulfillmentWebhookEvent
 
 export type OrderTrackingStatus = {
   id: string

@@ -1,4 +1,4 @@
-import { bulkLeadRequestSchema } from '@customarc/shared'
+import type { BulkLeadRequest } from '@customarc/shared'
 import { logger } from '../../logger.ts'
 import { notifyFounderBulkLead } from './notify.ts'
 import { bulkLeadRepo } from './repo.ts'
@@ -7,11 +7,10 @@ import { bulkLeadRepo } from './repo.ts'
 export class LeadService {
   constructor(private readonly repo = bulkLeadRepo) {}
 
-  async capture(input: unknown, userId?: string): Promise<{ id: string }> {
-    const { email, note } = bulkLeadRequestSchema.parse(input)
-    const lead = await this.repo.create({ email, note, userId })
+  async capture(input: BulkLeadRequest, userId?: string): Promise<{ id: string }> {
+    const lead = await this.repo.create({ email: input.email, note: input.note, userId })
     logger.info('bulk lead captured', { leadId: lead.id, userId })
-    await notifyFounderBulkLead({ leadId: lead.id, email, note })
+    await notifyFounderBulkLead({ leadId: lead.id, email: input.email, note: input.note })
     return lead
   }
 }

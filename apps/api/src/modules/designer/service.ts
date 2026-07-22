@@ -1,9 +1,9 @@
 import type { Design, Prisma } from '@customarc/db'
-import { parseDesignDocument } from '@customarc/shared'
+import type { DesignDocument, SaveDesignRequest, UpdateDesignRequest } from '@customarc/shared'
 import { forbidden, notFound } from '../../errors.ts'
 import { designerRepo } from './repo.ts'
 
-/** Save/Load designs. The Design document is validated through the shared zod schema on every write. */
+/** Save/Load designs. Document shape is validated at the route with shared Zod schemas. */
 export class DesignerService {
   constructor(private readonly repo = designerRepo) {}
 
@@ -18,19 +18,13 @@ export class DesignerService {
     return design
   }
 
-  async save(input: {
-    userId: string
-    blankId: string
-    document: unknown
-    name?: string
-  }): Promise<Design> {
+  async save(input: { userId: string } & SaveDesignRequest): Promise<Design> {
     const blankId = await this.repo.resolveBlankId(input.blankId)
     if (!blankId) throw notFound('Blank not found')
-    const document = parseDesignDocument(input.document) as Prisma.InputJsonValue
     return this.repo.create({
       userId: input.userId,
       blankId,
-      document,
+      document: toJson(input.document),
       ...(input.name !== undefined ? { name: input.name } : {}),
     })
   }
@@ -38,13 +32,15 @@ export class DesignerService {
   async updateForUser(
     id: string,
     userId: string,
-    document: unknown,
-    name?: string,
+    input: UpdateDesignRequest,
   ): Promise<Design> {
     await this.getByIdForUser(id, userId)
-    const parsed = parseDesignDocument(document) as Prisma.InputJsonValue
-    return this.repo.update(id, parsed, name)
+    return this.repo.update(id, toJson(input.document), input.name)
   }
+}
+
+function toJson(document: DesignDocument): Prisma.InputJsonValue {
+  return document as Prisma.InputJsonValue
 }
 
 export const designerService = new DesignerService()

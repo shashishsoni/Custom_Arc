@@ -1,5 +1,5 @@
-import { Elysia, t } from 'elysia'
-import { ok } from '@customarc/shared'
+import { Elysia } from 'elysia'
+import { ok, saveDesignRequestSchema, updateDesignRequestSchema } from '@customarc/shared'
 import { API_DESIGNS } from '@customarc/shared/constants'
 import { withAuth } from '../auth/plugin.ts'
 import { designerService } from './service.ts'
@@ -10,40 +10,11 @@ export const designerRoutes = new Elysia({ prefix: API_DESIGNS })
   .get('/:id', async ({ params, user }) =>
     ok(await designerService.getByIdForUser(params.id, user.id)),
   )
-  .post(
-    '/',
-    async ({ body, user }) =>
-      ok(
-        await designerService.save({
-          userId: user.id,
-          blankId: body.blankId,
-          document: body.document,
-          ...(body.name !== undefined ? { name: body.name } : {}),
-        }),
-      ),
-    {
-      body: t.Object({
-        blankId: t.String(),
-        document: t.Any(),
-        name: t.Optional(t.String()),
-      }),
-    },
-  )
-  .patch(
-    '/:id',
-    async ({ params, body, user }) =>
-      ok(
-        await designerService.updateForUser(
-          params.id,
-          user.id,
-          body.document,
-          body.name !== undefined ? body.name : undefined,
-        ),
-      ),
-    {
-      body: t.Object({
-        document: t.Any(),
-        name: t.Optional(t.String()),
-      }),
-    },
-  )
+  .post('/', async ({ body, user }) => {
+    const parsed = saveDesignRequestSchema.parse(body)
+    return ok(await designerService.save({ userId: user.id, ...parsed }))
+  })
+  .patch('/:id', async ({ params, body, user }) => {
+    const parsed = updateDesignRequestSchema.parse(body)
+    return ok(await designerService.updateForUser(params.id, user.id, parsed))
+  })

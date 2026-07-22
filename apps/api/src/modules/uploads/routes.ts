@@ -1,10 +1,15 @@
 import { Elysia, t } from 'elysia'
-import { ok } from '@customarc/shared'
+import { ok, uploadCreateMetaSchema } from '@customarc/shared'
 import { API_UPLOADS } from '@customarc/shared/constants'
-import { unauthorized } from '../../errors.ts'
+import { badRequest, unauthorized } from '../../errors.ts'
 import { withAuth } from '../auth/plugin.ts'
 import { uploadsService } from './service.ts'
 import { verifyUploadAccess } from './sign.ts'
+
+function requireUploadFile(body: object): File {
+  if (!('file' in body) || !(body.file instanceof File)) throw badRequest('file is required')
+  return body.file
+}
 
 /** Content is HMAC-signed (no session). Create requires auth. */
 export const uploadRoutes = new Elysia({ prefix: API_UPLOADS })
@@ -35,13 +40,12 @@ export const uploadRoutes = new Elysia({ prefix: API_UPLOADS })
   .use(withAuth)
   .post(
     '/',
-    async ({ body, user }) =>
-      ok(
-        await uploadsService.createForUser(user.id, body.file, {
-          category: body.category,
-          productSlug: body.productSlug,
-        }),
-      ),
+    async ({ body, user }) => {
+      if (typeof body !== 'object' || body === null) throw badRequest('Invalid body')
+      const file = requireUploadFile(body)
+      const meta = uploadCreateMetaSchema.parse(body)
+      return ok(await uploadsService.createForUser(user.id, file, meta))
+    },
     {
       body: t.Object({
         file: t.File({ type: ['image/jpeg', 'image/png', 'image/webp'], maxSize: '8m' }),

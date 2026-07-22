@@ -1,17 +1,10 @@
-import type { UploadResult } from '@customarc/shared'
-import { badRequest, notFound } from '../../errors.ts'
+import type { UploadCreateMeta, UploadResult } from '@customarc/shared'
+import { notFound } from '../../errors.ts'
 import { moderationService } from '../moderation/service.ts'
 import { reencodeUpload } from './reencode.ts'
 import { uploadsRepo } from './repo.ts'
 import { signedPreviewUrl } from './sign.ts'
 import { buildUploadObjectKey, putUploadObject, readUploadObject } from './storage.ts'
-
-const CATEGORIES = new Set(['mug', 'phone_case'])
-
-export type UploadContext = {
-  category: string
-  productSlug: string
-}
 
 export class UploadsService {
   constructor(private readonly repo = uploadsRepo) {}
@@ -19,13 +12,8 @@ export class UploadsService {
   async createForUser(
     userId: string,
     file: File,
-    ctx: UploadContext,
+    ctx: UploadCreateMeta,
   ): Promise<UploadResult> {
-    if (!CATEGORIES.has(ctx.category)) {
-      throw badRequest('Invalid blank category', { category: ctx.category })
-    }
-    if (!ctx.productSlug.trim()) throw badRequest('productSlug is required')
-
     const image = await reencodeUpload(file)
     const imageType = image.mimeType.split('/')[1] ?? 'jpeg'
     const key = buildUploadObjectKey({

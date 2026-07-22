@@ -51,6 +51,55 @@ export const generationResultSchema = z.object({
 })
 export type GenerationResult = z.infer<typeof generationResultSchema>
 
+/** POST /uploads — multipart metadata (file stays an Elysia File). */
+export const uploadCreateMetaSchema = z.object({
+  category: z.enum(['mug', 'phone_case']),
+  productSlug: z.string().min(1),
+})
+export type UploadCreateMeta = z.infer<typeof uploadCreateMetaSchema>
+
+/** Partner fulfillment webhook body. */
+export const fulfillmentWebhookEventSchema = z.object({
+  event: z.enum(['shipped', 'delivered']),
+  partnerOrderId: z.string().min(1),
+  trackingNumber: z.string().min(1).optional(),
+  carrier: z.string().min(1).optional(),
+})
+export type FulfillmentWebhookEvent = z.infer<typeof fulfillmentWebhookEventSchema>
+
+/** POST /designs — create. */
+export const saveDesignRequestSchema = z.object({
+  blankId: z.string().min(1),
+  document: designDocumentSchema,
+  name: z.string().min(1).optional(),
+})
+export type SaveDesignRequest = z.infer<typeof saveDesignRequestSchema>
+
+/** PATCH /designs/:id — update document / name. */
+export const updateDesignRequestSchema = z.object({
+  document: designDocumentSchema,
+  name: z.string().min(1).optional(),
+})
+export type UpdateDesignRequest = z.infer<typeof updateDesignRequestSchema>
+
+/** POST /credits/checkout */
+export const creditCheckoutRequestSchema = z.object({
+  packId: z.string().min(1),
+})
+export type CreditCheckoutRequest = z.infer<typeof creditCheckoutRequestSchema>
+
+/** POST /moderation/prompts */
+export const reviewPromptRequestSchema = z.object({
+  prompt: z.string().min(1),
+})
+export type ReviewPromptRequest = z.infer<typeof reviewPromptRequestSchema>
+
+/** POST /moderation/flags/:id/review */
+export const reviewFlagRequestSchema = z.object({
+  verdict: z.enum(['approved', 'blocked', 'flagged']),
+})
+export type ReviewFlagRequest = z.infer<typeof reviewFlagRequestSchema>
+
 /** POST/PATCH /designs — id used for subsequent patches. */
 export const savedDesignSchema = z.object({
   id: z.string().min(1),
