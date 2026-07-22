@@ -7,8 +7,7 @@ ENV CI=1 \
     API_PORT=3001 \
     PORT=3001
 
-RUN corepack enable && corepack prepare pnpm@11.13.0 --activate
-
+# oven/bun has no corepack — use bunx pnpm
 # 1) lockfile + package manifests (cache-friendly)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
@@ -18,13 +17,12 @@ COPY packages/db/package.json packages/db/
 COPY packages/design/package.json packages/design/
 
 # API + workspace deps only (no Next.js install)
-RUN pnpm install --frozen-lockfile --filter @customarc/api...
+RUN bunx pnpm@11.13.0 install --frozen-lockfile --filter @customarc/api...
 
 # 2) source + prisma client
 COPY apps/api apps/api
 COPY packages packages
-RUN pnpm --filter @customarc/db generate \
-  && pnpm store prune
+RUN bunx pnpm@11.13.0 --filter @customarc/db generate
 
 EXPOSE 3001
 CMD ["bun", "apps/api/src/index.ts"]
