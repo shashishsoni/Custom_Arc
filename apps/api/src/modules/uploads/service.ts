@@ -1,5 +1,6 @@
 import type { UploadResult } from '@customarc/shared'
 import { badRequest, notFound } from '../../errors.ts'
+import { moderationService } from '../moderation/service.ts'
 import { reencodeUpload } from './reencode.ts'
 import { uploadsRepo } from './repo.ts'
 import { signedPreviewUrl } from './sign.ts'
@@ -42,6 +43,8 @@ export class UploadsService {
       widthPx: image.widthPx,
       heightPx: image.heightPx,
     })
+
+    await moderationService.reviewUpload(row.id)
 
     return {
       id: row.id,

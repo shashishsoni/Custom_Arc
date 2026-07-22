@@ -3,7 +3,7 @@ export default function CustomizeLayout({ children }: { children: React.ReactNod
   return (
     <>
       <style>{`#site-footer{display:none!important}`}</style>
-      <div className="relative left-1/2 w-screen -translate-x-1/2 h-[calc(100dvh-var(--header-h))] overflow-hidden">
+      <div className="relative h-[calc(100dvh-var(--header-h))] w-full overflow-hidden">
         {children}
       </div>
     </>

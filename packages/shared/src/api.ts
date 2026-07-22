@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { designDocumentSchema } from './design-document'
 
 /** API envelope + cross-cutting request/response contracts (spec §7.5 — strict validation at boundaries). */
 
@@ -39,6 +40,17 @@ export const uploadResultSchema = z.object({
 })
 export type UploadResult = z.infer<typeof uploadResultSchema>
 
+/** POST /ai/generate — prompt → image wrapped as an Upload on the design. */
+export const generationResultSchema = z.object({
+  id: z.string().min(1),
+  prompt: z.string().min(1),
+  provider: z.string().min(1),
+  creditsCost: z.number().int().positive(),
+  balance: z.number().int().nonnegative(),
+  upload: uploadResultSchema,
+})
+export type GenerationResult = z.infer<typeof generationResultSchema>
+
 /** POST/PATCH /designs — id used for subsequent patches. */
 export const savedDesignSchema = z.object({
   id: z.string().min(1),
@@ -46,6 +58,15 @@ export const savedDesignSchema = z.object({
   name: z.string().nullable(),
 })
 export type SavedDesign = z.infer<typeof savedDesignSchema>
+
+/** GET /designs/:id — full document for resume. */
+export const designDetailSchema = z.object({
+  id: z.string().min(1),
+  blankId: z.string().min(1),
+  name: z.string().nullable(),
+  document: designDocumentSchema,
+})
+export type DesignDetail = z.infer<typeof designDetailSchema>
 
 export const orderStateSchema = z.enum([
   'designing',
@@ -70,8 +91,36 @@ export const orderSummarySchema = z.object({
   totalMinor: z.number().int().nonnegative(),
   currency: z.string().min(1),
   razorpayOrderId: z.string().nullable(),
+  partner: z.string().nullable().optional(),
+  partnerOrderId: z.string().nullable().optional(),
 })
 export type OrderSummary = z.infer<typeof orderSummarySchema>
+
+/** GET /orders/:id/tracking */
+export const orderTrackingStatusSchema = z.object({
+  id: z.string().min(1),
+  state: orderStateSchema,
+  totalMinor: z.number().int().nonnegative(),
+  currency: z.string().min(1),
+  partner: z.string().nullable(),
+  partnerOrderId: z.string().nullable(),
+  trackingNumber: z.string().nullable(),
+  carrier: z.string().nullable(),
+  shippedAt: z.string().nullable(),
+  deliveredAt: z.string().nullable(),
+  updatedAt: z.string().min(1),
+})
+export type OrderTrackingStatus = z.infer<typeof orderTrackingStatusSchema>
+
+/** POST /orders/:id/fulfill — partner submit result */
+export const fulfillmentSummarySchema = z.object({
+  orderId: z.string().min(1),
+  state: z.string().min(1),
+  partner: z.string().min(1),
+  partnerOrderId: z.string().min(1),
+  mode: z.enum(['sandbox', 'live']),
+})
+export type FulfillmentSummary = z.infer<typeof fulfillmentSummarySchema>
 
 /** POST /orders/:id/checkout */
 export const checkoutSessionSchema = z.object({
@@ -107,3 +156,49 @@ export const printFileSummarySchema = z.object({
   validated: z.boolean(),
 })
 export type PrintFileSummary = z.infer<typeof printFileSummarySchema>
+
+/** GET /moderation/designs/:id/gate */
+export const printGateResultSchema = z.object({
+  ok: z.boolean(),
+  designId: z.string().min(1),
+  reasons: z.array(z.string()),
+})
+export type PrintGateResult = z.infer<typeof printGateResultSchema>
+
+/** GET /credits/packs · POST /credits/checkout */
+export const creditPackSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  credits: z.number().int().positive(),
+  priceMinor: z.number().int().positive(),
+  currency: z.string().min(1),
+})
+export type CreditPack = z.infer<typeof creditPackSchema>
+
+export const creditCheckoutSessionSchema = z.object({
+  mode: z.enum(['razorpay', 'mock']),
+  amountMinor: z.number().int().positive(),
+  currency: z.string().min(1),
+  razorpayOrderId: z.string().min(1),
+  razorpayKeyId: z.string().optional(),
+  packId: z.string().min(1),
+  credits: z.number().int().positive(),
+})
+export type CreditCheckoutSession = z.infer<typeof creditCheckoutSessionSchema>
+
+export const creditConfirmRequestSchema = z.discriminatedUnion('mode', [
+  z.object({
+    mode: z.literal('razorpay'),
+    packId: z.string().min(1),
+    razorpayOrderId: z.string().min(1),
+    razorpayPaymentId: z.string().min(1),
+    razorpaySignature: z.string().min(1),
+  }),
+  z.object({
+    mode: z.literal('mock'),
+    packId: z.string().min(1),
+    razorpayOrderId: z.string().min(1),
+  }),
+])
+export type CreditConfirmRequest = z.infer<typeof creditConfirmRequestSchema>
+

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { makeImageLayer, makeTextLayer, patchTransform, updateLayer } from '../../design/design-doc'
+import { AiGeneratePanel } from './ai-generate-panel'
 
 async function uploadDesignImage(
   file: File,
@@ -61,6 +62,7 @@ async function uploadDesignImage(
 type Props = {
   blank: Blank
   doc: DesignDocument
+  designId: string | null
   selectedLayerId: string | null
   onDocChange: (doc: DesignDocument) => void
   onSelectLayer: (id: string | null) => void
@@ -71,7 +73,14 @@ const panel = 'rounded border border-border bg-card p-3'
 const field = 'space-y-1.5'
 const control = 'min-h-10 rounded text-sm'
 
-export function ToolsPanel({ blank, doc, selectedLayerId, onDocChange, onSelectLayer }: Props) {
+export function ToolsPanel({
+  blank,
+  doc,
+  designId,
+  selectedLayerId,
+  onDocChange,
+  onSelectLayer,
+}: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('CustomArc')
   const [busy, setBusy] = useState(false)
@@ -173,6 +182,14 @@ export function ToolsPanel({ blank, doc, selectedLayerId, onDocChange, onSelectL
           Click a print zone, then drag to place the selected layer.
         </p>
       </section>
+
+      <AiGeneratePanel
+        blank={blank}
+        doc={doc}
+        designId={designId}
+        onDocChange={onDocChange}
+        onSelectLayer={onSelectLayer}
+      />
 
       {doc.layers.length > 0 && (
         <section className={panel} aria-label="Layers">

@@ -1,19 +1,118 @@
-import { ApiError } from '../../errors.ts'
+import { badRequest, forbidden, notFound } from '../../errors.ts'
+import { logger } from '../../logger.ts'
+import { moderationService } from '../moderation/service.ts'
+import { assertTransition } from '../orders/transitions.ts'
+import { printPartner, type PartnerSubmitResult } from './partner.ts'
+import { fulfillmentRepo, type FulfillmentOrder } from './repo.ts'
 
-/**
- * Print partner adapter (spec §6, issues 15, 17). The Print File is manufacturer-agnostic;
- * the partner is a swappable implementation behind this interface.
- */
-export interface PrintPartner {
-  submitOrder(input: {
-    printFiles: { storageKey: string; widthPx: number; heightPx: number }[]
-    shipping: unknown
-  }): Promise<{ partnerOrderId: string }>
+/** Sandbox shipping — real address capture is a later checkout step. */
+const SANDBOX_SHIPPING = {
+  name: 'CustomArc Sandbox',
+  line1: '1 Proof Lane',
+  city: 'Mumbai',
+  postalCode: '400001',
+  country: 'IN',
 }
 
+export type FulfillmentSummary = {
+  orderId: string
+  state: string
+  partner: string
+  partnerOrderId: string
+  mode: 'sandbox' | 'live'
+}
+
+/** Issue 17 — submit print files to the print partner (sandbox for first proof). */
 export class FulfillmentService {
-  async submitToPartner(_input: unknown): Promise<never> {
-    throw new ApiError(501, 'Fulfillment not implemented (issue 17)')
+  constructor(
+    private readonly repo = fulfillmentRepo,
+    private readonly partner = printPartner,
+  ) {}
+
+  async submitForOrder(orderId: string): Promise<FulfillmentSummary> {
+    const order = await this.repo.getOrder(orderId)
+    if (!order) throw notFound('Order not found')
+    return this.submit(order)
+  }
+
+  async submitForOwnedOrder(orderId: string, userId: string): Promise<FulfillmentSummary> {
+    const order = await this.repo.getOrder(orderId)
+    if (!order) throw notFound('Order not found')
+    if (order.userId !== userId) throw forbidden()
+    return this.submit(order)
+  }
+
+  private async submit(order: FulfillmentOrder): Promise<FulfillmentSummary> {
+    if (order.partnerOrderId && order.partner) {
+      return {
+        orderId: order.id,
+        state: order.state,
+        partner: order.partner,
+        partnerOrderId: order.partnerOrderId,
+        mode: order.partnerOrderId.startsWith('sandbox_') ? 'sandbox' : 'live',
+      }
+    }
+
+    if (order.state !== 'paid' && order.state !== 'in_production') {
+      throw badRequest('Order must be paid before partner submit')
+    }
+
+    for (const item of order.items) {
+      await moderationService.assertCanPrint(item.designId, { orderId: order.id })
+      if (!item.printFile) throw badRequest('Print file missing for an order item')
+      if (!item.printFile.validated) {
+        throw badRequest('Print file failed validation; cannot submit to partner')
+      }
+    }
+
+    const items = order.items
+      .map((item) => {
+        if (!item.printFile) return null
+        return {
+          partnerSku: item.blankVariant.partnerSku,
+          storageKey: item.printFile.storageKey,
+          widthPx: item.printFile.widthPx,
+          heightPx: item.printFile.heightPx,
+          dpi: item.printFile.dpi,
+          format: item.printFile.format,
+        }
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null)
+
+    if (items.length === 0) throw badRequest('No print files to submit')
+
+    const result: PartnerSubmitResult = await this.partner.submitOrder({
+      orderId: order.id,
+      currency: order.currency,
+      totalMinor: order.totalMinor,
+      items,
+      shipping: SANDBOX_SHIPPING,
+    })
+
+    if (order.state === 'paid') {
+      assertTransition('paid', 'in_production')
+    }
+
+    const updated = await this.repo.markInProduction(
+      order.id,
+      result.partner,
+      result.partnerOrderId,
+    )
+
+    logger.info('order sent to partner', {
+      orderId: order.id,
+      partner: result.partner,
+      partnerOrderId: result.partnerOrderId,
+      mode: result.mode,
+    })
+
+    return {
+      orderId: updated.id,
+      state: updated.state,
+      partner: result.partner,
+      partnerOrderId: result.partnerOrderId,
+      mode: result.mode,
+    }
   }
 }
 

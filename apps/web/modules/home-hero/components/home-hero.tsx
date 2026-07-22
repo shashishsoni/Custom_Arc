@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { buttonVariants } from '@/components/ui/button'
 import { tryR2MediaUrl } from '@/lib/r2'
 import { cn } from '@/lib/utils'
-import { STUDIO_STAGE_BG } from '@/modules/customizer'
+import { STUDIO_STAGE_BG } from '@/lib/studio-stage-bg'
 
 const HeroProductsScene = dynamic(
   () => import('./hero-products-scene').then((m) => m.HeroProductsScene),
@@ -48,7 +48,7 @@ export function HomeHero() {
   return (
     <section
       className={cn(
-        'relative left-1/2 min-h-[calc(100dvh-var(--header-h))] w-screen -translate-x-1/2 overflow-hidden',
+        'relative min-h-[calc(100dvh-var(--header-h))] w-full overflow-hidden',
         STUDIO_STAGE_BG,
       )}
       aria-labelledby="hero-title"

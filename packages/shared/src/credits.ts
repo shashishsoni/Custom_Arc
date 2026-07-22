@@ -30,3 +30,22 @@ export const spendCreditsRequestSchema = z.object({
   reason: z.string().min(1),
 })
 export type SpendCreditsRequest = z.infer<typeof spendCreditsRequestSchema>
+
+/** Phase-1 credit packs (INR paise). */
+export const CREDIT_PACKS = [
+  { id: 'starter-10', label: 'Starter', credits: 10, priceMinor: 9900, currency: 'INR' },
+  { id: 'studio-50', label: 'Studio', credits: 50, priceMinor: 39900, currency: 'INR' },
+  { id: 'pro-100', label: 'Pro', credits: 100, priceMinor: 69900, currency: 'INR' },
+] as const satisfies ReadonlyArray<{
+  id: string
+  label: string
+  credits: number
+  priceMinor: number
+  currency: string
+}>
+
+export type CreditPackId = (typeof CREDIT_PACKS)[number]['id']
+
+export function getCreditPack(id: string): (typeof CREDIT_PACKS)[number] | undefined {
+  return CREDIT_PACKS.find((p) => p.id === id)
+}

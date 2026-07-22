@@ -16,8 +16,12 @@ export type ReencodedImage = {
 export async function reencodeUpload(file: File): Promise<ReencodedImage> {
   if (!ALLOWED.has(file.type)) throw badRequest('Only JPEG, PNG, or WebP images are allowed')
   if (file.size > MAX_BYTES) throw badRequest('Image must be under 8MB')
+  return reencodeBytes(Buffer.from(await file.arrayBuffer()))
+}
 
-  const input = Buffer.from(await file.arrayBuffer())
+/** Re-encode raw image bytes (AI provider download). */
+export async function reencodeBytes(input: Buffer): Promise<ReencodedImage> {
+  if (input.byteLength > MAX_BYTES) throw badRequest('Image must be under 8MB')
   try {
     const pipeline = sharp(input).rotate().resize({
       width: MAX_EDGE,

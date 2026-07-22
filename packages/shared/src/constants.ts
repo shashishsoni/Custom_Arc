@@ -53,6 +53,10 @@ export const R2_ENABLED = Boolean(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET
 export const FAL_KEY = optional('FAL_KEY')
 export const CLOUDFLARE_ACCOUNT_ID = optional('CLOUDFLARE_ACCOUNT_ID')
 export const CLOUDFLARE_AI_TOKEN = optional('CLOUDFLARE_AI_TOKEN')
+/** Credits debited per AI generation (idempotent by generation id). */
+export const AI_GENERATION_CREDIT_COST = Number(optional('AI_GENERATION_CREDIT_COST', '1')) || 1
+export const FAL_ENABLED = Boolean(FAL_KEY)
+export const CLOUDFLARE_AI_ENABLED = Boolean(CLOUDFLARE_ACCOUNT_ID && CLOUDFLARE_AI_TOKEN)
 
 export const RAZORPAY_KEY_ID = optional('RAZORPAY_KEY_ID')
 export const RAZORPAY_KEY_SECRET = optional('RAZORPAY_KEY_SECRET')
@@ -64,6 +68,35 @@ export const RAZORPAY_MIN_AMOUNT_PAISE = 100
 
 export const PRINT_PARTNER = optional('PRINT_PARTNER', 'qikink')
 export const PRINT_PARTNER_API_KEY = optional('PRINT_PARTNER_API_KEY')
+
+/** @deprecated Unused — moderation is AI auto approve/reject. Kept for env compat. */
+export const MODERATION_AUTO_APPROVE = optional('MODERATION_AUTO_APPROVE', 'true') === 'true'
+/** Comma-separated user ids allowed to POST /moderation/flags/:id/review (rare override). */
+export const MODERATION_REVIEWER_IDS = optional('MODERATION_REVIEWER_IDS')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+/** Founder inbox when a paid order hits the print gate (not every upload). */
+export const MODERATION_NOTIFY_EMAIL = optional('MODERATION_NOTIFY_EMAIL')
+/** Bulk lead inquiries; defaults to MODERATION_NOTIFY_EMAIL. */
+export const LEADS_NOTIFY_EMAIL = optional('LEADS_NOTIFY_EMAIL') || MODERATION_NOTIFY_EMAIL
+export const OPENAI_API_KEY = optional('OPENAI_API_KEY')
+/**
+ * NVIDIA NIM API key (build.nvidia.com) — OpenAI-compatible fallback for moderation + semantic.
+ * Used when OPENAI_API_KEY is unset or OpenAI call returns null.
+ */
+export const NVIDIA_API_KEY = optional('NVIDIA_API_KEY')
+/** Multimodal content-safety model (OpenAI Moderations equivalent). */
+export const NVIDIA_MODERATION_MODEL = optional(
+  'NVIDIA_MODERATION_MODEL',
+  'nvidia/nemotron-3.5-content-safety',
+)
+/** Small instruct model for prompt IP/policy JSON screen (gpt-4o-mini equivalent). */
+export const NVIDIA_SEMANTIC_MODEL = optional(
+  'NVIDIA_SEMANTIC_MODEL',
+  'meta/llama-3.1-8b-instruct',
+)
+
 
 export const SENTRY_DSN = optional('SENTRY_DSN')
 
@@ -90,6 +123,9 @@ export const API_UPLOADS = '/uploads'
 export const API_CREDITS = '/credits'
 export const API_CREDITS_BALANCE = '/credits/balance'
 export const API_CREDITS_SPEND = '/credits/spend'
+export const API_CREDITS_PACKS = '/credits/packs'
+export const API_CREDITS_CHECKOUT = '/credits/checkout'
+export const API_CREDITS_CONFIRM = '/credits/confirm'
 export const API_LEADS = '/leads'
 export const API_LEADS_BULK = '/leads/bulk'
 export const API_AUTH = '/api/auth'
@@ -97,6 +133,17 @@ export const API_ORDERS = '/orders'
 export const API_BILLING = '/billing'
 export const API_BILLING_WEBHOOK = '/billing/webhook'
 export const API_PRINT_FILES = '/print-files'
+export const API_MODERATION = '/moderation'
+export const API_FULFILLMENT = '/fulfillment'
+export const API_AI = '/ai'
+export const API_AI_GENERATE = '/ai/generate'
+
+/** Sandbox partner when API key unset (issue 17 first proof). */
+export const PRINT_PARTNER_SANDBOX = !PRINT_PARTNER_API_KEY
+
+/** Partner shipment webhook shared secret (issue 18). Empty = dev/sandbox only. */
+export const FULFILLMENT_WEBHOOK_SECRET = optional('FULFILLMENT_WEBHOOK_SECRET')
+
 
 /** Absolute URL for an API path. */
 export function apiUrl(path: string): string {
@@ -109,3 +156,11 @@ export function apiUrl(path: string): string {
 export const WEB_HOME = '/'
 export const WEB_CATALOG = '/catalog'
 export const WEB_CUSTOMIZE = '/customize'
+export const WEB_ORDERS = '/orders'
+export const WEB_BULK = '/bulk'
+export const WEB_ACCOUNT_CREDITS = '/account/credits'
+export const WEB_PRIVACY = '/privacy'
+export const WEB_TERMS = '/terms'
+export const WEB_SHIPPING = '/shipping'
+export const WEB_REFUND = '/refund'
+export const WEB_CONTACT = '/contact'

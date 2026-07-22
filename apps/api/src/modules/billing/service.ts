@@ -20,6 +20,7 @@ export class BillingService {
     orderId: string
     amountMinor: number
     currency: string
+    notes?: Record<string, string>
   }): Promise<CheckoutProviderSession> {
     if (input.amountMinor < RAZORPAY_MIN_AMOUNT_PAISE) {
       throw badRequest(`Amount must be at least ${RAZORPAY_MIN_AMOUNT_PAISE} paise`)
@@ -30,7 +31,6 @@ export class BillingService {
     }
 
     const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64')
-    // Bun's global Response can be empty here (no DOM lib); cast to undici's Fetch Response.
     const res = (await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
@@ -41,7 +41,7 @@ export class BillingService {
         amount: input.amountMinor,
         currency: input.currency,
         receipt: input.orderId.slice(0, 40),
-        notes: { customarcOrderId: input.orderId },
+        notes: { customarcOrderId: input.orderId, ...input.notes },
       }),
     })) as unknown as FetchResponse
 
@@ -59,6 +59,18 @@ export class BillingService {
       razorpayOrderId: body.id,
       razorpayKeyId: RAZORPAY_KEY_ID,
     }
+  }
+
+  /** Fetch Razorpay order notes (credit-pack webhook path). */
+  async getOrderNotes(razorpayOrderId: string): Promise<Record<string, string>> {
+    if (!RAZORPAY_ENABLED || razorpayOrderId.startsWith('mock_')) return {}
+    const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64')
+    const res = (await fetch(`https://api.razorpay.com/v1/orders/${razorpayOrderId}`, {
+      headers: { Authorization: `Basic ${auth}` },
+    })) as unknown as FetchResponse
+    if (!res.ok) return {}
+    const body = (await res.json()) as { notes?: Record<string, string> }
+    return body.notes ?? {}
   }
 
   verifyPaymentSignature(input: {

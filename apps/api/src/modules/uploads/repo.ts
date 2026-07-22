@@ -1,15 +1,5 @@
+import type { Upload } from '@customarc/db'
 import { prisma } from '@customarc/db'
-
-export type UploadRow = {
-  id: string
-  userId: string
-  storageKey: string
-  mimeType: string
-  sizeBytes: number
-  widthPx: number | null
-  heightPx: number | null
-  status: string
-}
 
 export const uploadsRepo = {
   create(input: {
@@ -19,7 +9,7 @@ export const uploadsRepo = {
     sizeBytes: number
     widthPx: number
     heightPx: number
-  }): Promise<UploadRow> {
+  }): Promise<Upload> {
     return prisma.upload.create({
       data: {
         userId: input.userId,
@@ -30,10 +20,10 @@ export const uploadsRepo = {
         heightPx: input.heightPx,
         status: 'reencoded',
       },
-    }) as Promise<UploadRow>
+    })
   },
 
-  getById(id: string): Promise<UploadRow | null> {
-    return prisma.upload.findUnique({ where: { id } }) as Promise<UploadRow | null>
+  getById(id: string): Promise<Upload | null> {
+    return prisma.upload.findUnique({ where: { id } })
   },
 }

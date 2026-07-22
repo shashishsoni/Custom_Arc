@@ -1,9 +1,11 @@
+import { cn } from '@/lib/utils'
+import { STUDIO_STAGE_BG } from '@/lib/studio-stage-bg'
 import { CATEGORIES } from '../data'
 import { CategoryRail } from './category-rail'
 
 export function CategoriesSection() {
   return (
-    <section className="relative left-1/2 w-screen -translate-x-1/2 overflow-x-clip bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent-warm)_80%,var(--bg))_0%,var(--bg)_50%,color-mix(in_srgb,var(--accent-warm)_80%,var(--bg))_100%)]">
+    <section className={cn('relative w-full overflow-x-clip', STUDIO_STAGE_BG)}>
       <div className="mx-auto w-full max-w-7xl px-4 pt-[clamp(4.5rem,10vw,9rem)] pb-[clamp(5.25rem,10vw,9.5rem)] md:px-6">
         <header className="pb-[clamp(3.4rem,7vw,5.75rem)]">
           <h2 className="font-heading max-w-[9ch] text-[clamp(2.75rem,7vw,5.5rem)] leading-[0.9] font-semibold tracking-tight text-fg md:max-w-[11ch]">

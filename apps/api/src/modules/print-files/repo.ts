@@ -1,72 +1,57 @@
+import type { PrintFile, Prisma } from '@customarc/db'
 import { prisma } from '@customarc/db'
 
-export type PrintFileRow = {
-  id: string
-  orderItemId: string
-  storageKey: string
-  widthPx: number
-  heightPx: number
-  dpi: number
-  format: string
-  validated: boolean
-  createdAt: Date
-}
+const orderItemForPrint = {
+  include: {
+    design: {
+      include: {
+        blank: { select: { id: true, slug: true, template: true } },
+      },
+    },
+  },
+} satisfies Prisma.OrderItemDefaultArgs
 
-export type OrderItemForPrint = {
-  id: string
-  orderId: string
-  designId: string
-  design: {
-    id: string
-    userId: string
-    blankId: string
-    document: unknown
-    blank: {
-      id: string
-      slug: string
-      template: unknown
-    }
-  }
-}
+export type OrderItemForPrint = Prisma.OrderItemGetPayload<typeof orderItemForPrint>
+
+const printFileWithOwner = {
+  include: {
+    orderItem: { include: { order: { select: { userId: true, id: true } } } },
+  },
+} satisfies Prisma.PrintFileDefaultArgs
+
+export type PrintFileWithOwner = Prisma.PrintFileGetPayload<typeof printFileWithOwner>
 
 export const printFilesRepo = {
-  async listOrderItems(orderId: string): Promise<OrderItemForPrint[]> {
+  listOrderItems(orderId: string): Promise<OrderItemForPrint[]> {
     return prisma.orderItem.findMany({
       where: { orderId },
-      include: {
-        design: {
-          include: {
-            blank: { select: { id: true, slug: true, template: true } },
-          },
-        },
-      },
-    }) as Promise<OrderItemForPrint[]>
+      ...orderItemForPrint,
+    })
   },
 
-  async listByOrderId(orderId: string): Promise<PrintFileRow[]> {
+  listByOrderId(orderId: string): Promise<PrintFile[]> {
     return prisma.printFile.findMany({
       where: { orderItem: { orderId } },
       orderBy: { createdAt: 'asc' },
-    }) as unknown as Promise<PrintFileRow[]>
+    })
   },
 
-  async getById(id: string): Promise<(PrintFileRow & { orderItem: { order: { userId: string; id: string } } }) | null> {
+  getById(id: string): Promise<PrintFileWithOwner | null> {
     return prisma.printFile.findUnique({
       where: { id },
-      include: { orderItem: { include: { order: { select: { userId: true, id: true } } } } },
-    }) as unknown as Promise<
-      (PrintFileRow & { orderItem: { order: { userId: string; id: string } } }) | null
-    >
+      ...printFileWithOwner,
+    })
   },
 
-  async upsertForItem(input: {
+  upsertForItem(input: {
     orderItemId: string
     storageKey: string
     widthPx: number
     heightPx: number
     dpi: number
     format: string
-  }): Promise<PrintFileRow> {
+    validated: boolean
+  }): Promise<PrintFile> {
     return prisma.printFile.upsert({
       where: { orderItemId: input.orderItemId },
       create: {
@@ -76,7 +61,7 @@ export const printFilesRepo = {
         heightPx: input.heightPx,
         dpi: input.dpi,
         format: input.format,
-        validated: true,
+        validated: input.validated,
       },
       update: {
         storageKey: input.storageKey,
@@ -84,8 +69,8 @@ export const printFilesRepo = {
         heightPx: input.heightPx,
         dpi: input.dpi,
         format: input.format,
-        validated: true,
+        validated: input.validated,
       },
-    }) as unknown as Promise<PrintFileRow>
+    })
   },
 }

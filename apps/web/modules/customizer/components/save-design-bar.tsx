@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { DesignDocument } from '@customarc/shared'
 import { savedDesignSchema } from '@customarc/shared'
 import { API_DESIGNS, apiUrl } from '@customarc/shared/constants'
@@ -15,6 +15,7 @@ type Props = {
   blankSlug: string
   doc: DesignDocument
   designId: string | null
+  initialName?: string
   onSaved: (id: string) => void
   /** Horizontal dock control for the studio bottom bar. */
   className?: string
@@ -58,9 +59,20 @@ async function postOrPatchDesign(input: {
   return { kind: 'ok' as const, design: savedDesignSchema.parse(body.data) }
 }
 
-export function SaveDesignBar({ blankSlug, doc, designId, onSaved, className }: Props) {
+export function SaveDesignBar({
+  blankSlug,
+  doc,
+  designId,
+  initialName = '',
+  onSaved,
+  className,
+}: Props) {
   const { data: session } = authClient.useSession()
-  const [name, setName] = useState('')
+  const [name, setName] = useState(initialName)
+
+  useEffect(() => {
+    setName(initialName)
+  }, [initialName])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
