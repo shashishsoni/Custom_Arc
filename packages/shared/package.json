@@ -11,7 +11,8 @@
     "./design-document": "./src/design-document.ts",
     "./blank": "./src/blank.ts",
     "./credits": "./src/credits.ts",
-    "./api": "./src/api.ts"
+    "./api": "./src/api.ts",
+    "./utils": "./src/utils.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

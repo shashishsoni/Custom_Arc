@@ -9,24 +9,30 @@
  * API entry must `import './load-env'` before this module is first imported.
  */
 
+import { stripTrailingSlash } from './utils'
+
 function optional(name: keyof NodeJS.ProcessEnv, fallback = ''): string {
   return process.env[name]?.trim() || fallback
 }
 
 // ─── PUBLIC env ───────────────────────────────────────────────────
 
-export const API_BASE_URL =
+export const API_BASE_URL = stripTrailingSlash(
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
-  process.env.API_BASE_URL?.trim() ||
-  'http://localhost:3001'
+    process.env.API_BASE_URL?.trim() ||
+    'http://localhost:3001',
+)
 
-export const WEB_BASE_URL =
+export const WEB_BASE_URL = stripTrailingSlash(
   (globalThis as { location?: { origin?: string } }).location?.origin ||
-  process.env.NEXT_PUBLIC_WEB_BASE_URL?.trim() ||
-  process.env.WEB_BASE_URL?.trim() ||
-  'http://localhost:3000'
+    process.env.NEXT_PUBLIC_WEB_BASE_URL?.trim() ||
+    process.env.WEB_BASE_URL?.trim() ||
+    'http://localhost:3000',
+)
 
-export const R2_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL?.trim() || ''
+export const R2_PUBLIC_BASE_URL = stripTrailingSlash(
+  process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL?.trim() || '',
+)
 
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development'
