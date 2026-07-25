@@ -20,3 +20,25 @@ export const conflict = (message: string, details?: unknown): ApiError =>
   new ApiError(409, message, details)
 export const internalServerError = (message = 'Internal server error', details?: unknown): ApiError =>
   new ApiError(500, message, details)
+
+/**
+ * Elysia often wraps thrown errors, so `instanceof ApiError` alone misses them
+ * and the client sees a blank 500. Walk the cause chain + duck-type statusCode.
+ */
+export function resolveApiError(error: unknown, depth = 0): ApiError | null {
+  if (depth > 4 || error == null) return null
+  if (error instanceof ApiError) return error
+  if (typeof error === 'object') {
+    const obj = error as { name?: string; message?: string; statusCode?: unknown; details?: unknown; cause?: unknown }
+    if (
+      typeof obj.statusCode === 'number' &&
+      obj.statusCode >= 400 &&
+      obj.statusCode < 600 &&
+      typeof obj.message === 'string'
+    ) {
+      return new ApiError(obj.statusCode, obj.message, obj.details)
+    }
+    if ('cause' in obj) return resolveApiError(obj.cause, depth + 1)
+  }
+  return null
+}

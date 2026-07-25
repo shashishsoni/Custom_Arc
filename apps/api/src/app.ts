@@ -3,7 +3,7 @@ import { cors } from '@elysiajs/cors'
 import { err, ok } from '@customarc/shared'
 import { WEB_BASE_URL, LOG_LEVEL, API_ALIVE, API_HEALTH } from '@customarc/shared/constants'
 import { logger } from './logger.ts'
-import { ApiError } from './errors.ts'
+import { resolveApiError } from './errors.ts'
 import { authPlugin } from './modules/auth/plugin.ts'
 import { catalogRoutes } from './modules/catalog/routes.ts'
 import { designerRoutes } from './modules/designer/routes.ts'
@@ -54,15 +54,21 @@ export const app = new Elysia()
   .use(aiRoutes)
   .use(fulfillmentWebhookRoutes)
   .onError(({ code, error, set }) => {
-    if (error instanceof ApiError) {
-      set.status = error.statusCode
-      return err(error.message, error.details)
+    const apiErr = resolveApiError(error)
+    if (apiErr) {
+      set.status = apiErr.statusCode
+      return err(apiErr.message, apiErr.details)
     }
-    if (code === 'VALIDATION') {
+    // ZodError from schema.parse (name check — zod is transitive via @customarc/shared)
+    if (error instanceof Error && error.name === 'ZodError') {
       set.status = 400
       return err('Validation failed', error.message)
     }
+    if (code === 'VALIDATION') {
+      set.status = 400
+      return err('Validation failed', error instanceof Error ? error.message : String(error))
+    }
     logger.error('unhandled error', error)
     set.status = 500
-    return err('Internal server error')
+    return err(error instanceof Error ? error.message : 'Internal server error')
   })
