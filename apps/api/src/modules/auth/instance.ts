@@ -7,6 +7,21 @@ import { creditsService } from '../credits/service.ts'
 import { sendMagicLinkEmail, sendOtpEmail } from './mail.ts'
 
 /**
+ * Web and API run on different registrable domains in production
+ * (vercel.app vs code.run). The session cookie must be SameSite=None; Secure
+ * or the browser silently drops it and sign-in never sticks in the UI.
+ */
+const CROSS_SITE_COOKIES = (() => {
+  try {
+    const api = new URL(API_BASE_URL)
+    const web = new URL(WEB_BASE_URL)
+    return api.protocol === 'https:' && api.host !== web.host
+  } catch {
+    return false
+  }
+})()
+
+/**
  * Passwordless auth (settled): magic link + email OTP + optional Google OAuth.
  * Passwords are intentionally disabled — do not enable emailAndPassword.
  */
@@ -18,6 +33,16 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: false },
   ...googleAuth(),
   advanced: {
+    ...(CROSS_SITE_COOKIES
+      ? {
+          defaultCookieAttributes: {
+            sameSite: 'none' as const,
+            secure: true,
+            // CHIPS — keeps the cookie usable as browsers phase out third-party cookies.
+            partitioned: true,
+          },
+        }
+      : {}),
     ipAddress: {
       ipAddressHeaders: ['cf-connecting-ip', 'x-real-ip', 'x-forwarded-for'],
       ...(IS_DEVELOPMENT ? { disableIpTracking: true } : {}),
