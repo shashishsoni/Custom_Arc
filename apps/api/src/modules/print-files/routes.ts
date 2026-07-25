@@ -1,5 +1,4 @@
 import { Elysia } from 'elysia'
-import { ok } from '@customarc/shared'
 import { API_PRINT_FILES } from '@customarc/shared/constants'
 import { withAuth } from '../auth/plugin.ts'
 import { printFilesService } from './service.ts'

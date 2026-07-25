@@ -26,13 +26,7 @@ const panel = 'rounded border border-border bg-card p-3'
 const control = 'min-h-10 rounded text-sm'
 
 /** Issue 12 — prompt → FLUX texture wrapped onto the blank. */
-export function AiGeneratePanel({
-  blank,
-  doc,
-  designId,
-  onDocChange,
-  onSelectLayer,
-}: Props) {
+export function AiGeneratePanel({ doc, designId, onDocChange, onSelectLayer }: Props) {
   const { data: session } = authClient.useSession()
   const [prompt, setPrompt] = useState('')
   const [busy, setBusy] = useState(false)

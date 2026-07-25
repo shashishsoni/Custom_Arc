@@ -1,0 +1,2 @@
+# Full typecheck is too slow per-commit; gate it at push instead.
+pnpm typecheck

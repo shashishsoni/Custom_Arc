@@ -19,9 +19,10 @@ export function StageBoard() {
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLButtonElement>, index: number) {
-    let next = index
+    let next: number
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (index + 1) % STAGES.length
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (index - 1 + STAGES.length) % STAGES.length
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp')
+      next = (index - 1 + STAGES.length) % STAGES.length
     else if (e.key === 'Home') next = 0
     else if (e.key === 'End') next = STAGES.length - 1
     else return
@@ -72,7 +73,13 @@ export function StageBoard() {
         {STAGES.map((s, i) => {
           const selected = i === active
           return (
-            <li key={s.id} className={cn('absolute w-[180px] max-md:relative max-md:mb-3 max-md:w-full', STEP_POS[i])}>
+            <li
+              key={s.id}
+              className={cn(
+                'absolute w-[180px] max-md:relative max-md:mb-3 max-md:w-full',
+                STEP_POS[i],
+              )}
+            >
               <button
                 id={`${uid}-tab-${i}`}
                 type="button"
@@ -101,7 +108,9 @@ export function StageBoard() {
                 </span>
                 <span className="block pl-0.5">
                   <span className="block text-sm leading-tight font-bold text-fg">{s.label}</span>
-                  <span className="mt-0.5 block text-[11px] leading-tight text-fg-muted">{s.kicker}</span>
+                  <span className="mt-0.5 block text-[11px] leading-tight text-fg-muted">
+                    {s.kicker}
+                  </span>
                 </span>
               </button>
             </li>
