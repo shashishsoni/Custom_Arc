@@ -83,7 +83,17 @@ export class AiService {
         originalFileName: `ai-${row.id}.jpg`,
         imageType: 'jpg',
       })
-      const storageKey = await putUploadObject(key, image.buffer, image.mimeType)
+      let storageKey: string
+      try {
+        storageKey = await putUploadObject(key, image.buffer, image.mimeType)
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        throw badRequest(
+          /certificate|CERT_|SSL|TLS/i.test(msg)
+            ? `R2 upload TLS failed: ${msg} (set NODE_USE_SYSTEM_CA=1)`
+            : `R2/local upload failed: ${msg}`,
+        )
+      }
       const upload = await uploadsRepo.create({
         userId: input.userId,
         storageKey,

@@ -7,6 +7,7 @@ import {
 } from '@customarc/shared/constants'
 import { badRequest } from '../../errors.ts'
 import { logger } from '../../logger.ts'
+import { fetchOrThrow } from '../../utils/http.ts'
 
 export type GeneratedImage = {
   bytes: Buffer
@@ -54,7 +55,7 @@ export class CloudflareFluxGenerator implements ImageGenerator {
     if (!CLOUDFLARE_AI_ENABLED) throw badRequest('Cloudflare AI is not configured')
 
     const url = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/black-forest-labs/flux-1-schnell`
-    const res = await fetch(url, {
+    const res = await fetchOrThrow('Cloudflare AI', url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${CLOUDFLARE_AI_TOKEN}`,
@@ -65,7 +66,7 @@ export class CloudflareFluxGenerator implements ImageGenerator {
     if (!res.ok) {
       const body = await res.text().catch(() => '')
       logger.warn('cloudflare ai failed', { status: res.status, body: body.slice(0, 200) })
-      throw badRequest('Cloudflare AI generation failed')
+      throw badRequest(`Cloudflare AI generation failed (${res.status})`)
     }
 
     const ct = res.headers.get('content-type') ?? ''
@@ -119,7 +120,7 @@ export function createImageGenerator(): ImageGenerator {
 }
 
 async function falRun<T>(model: string, input: Record<string, unknown>): Promise<T> {
-  const res = await fetch(`https://fal.run/${model}`, {
+  const res = await fetchOrThrow(`fal ${model}`, `https://fal.run/${model}`, {
     method: 'POST',
     headers: {
       Authorization: `Key ${FAL_KEY}`,
@@ -130,13 +131,18 @@ async function falRun<T>(model: string, input: Record<string, unknown>): Promise
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     logger.warn('fal run failed', { model, status: res.status, body: body.slice(0, 200) })
-    throw badRequest(`fal ${model} failed`)
+    if (res.status === 403 && /exhausted|balance|locked/i.test(body)) {
+      throw badRequest(
+        'fal balance exhausted — top up at fal.ai/dashboard/billing or rely on Cloudflare AI',
+      )
+    }
+    throw badRequest(`fal ${model} failed (${res.status})`)
   }
   return (await res.json()) as T
 }
 
 async function downloadBytes(url: string): Promise<Buffer> {
-  const res = await fetch(url)
+  const res = await fetchOrThrow('fal image download', url)
   if (!res.ok) throw badRequest('Could not download generated image')
   return Buffer.from(await res.arrayBuffer())
 }

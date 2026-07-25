@@ -25,6 +25,8 @@ import {
 import { authClient } from '@/lib/auth-client'
 import { AuthModal } from '@/modules/auth-modal'
 import { subscribeCreditsBalance } from '@/modules/credits'
+import { UserAvatar } from '@/components/ui/user-avatar/user-avatar'
+import { UserAvatarMenu } from '@/components/ui/user-avatar/user-avatar-menu'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -254,17 +256,19 @@ export function SiteHeader({ cartCount = 2 }: SiteHeaderProps) {
           </Link>
 
           <div className="flex min-w-0 items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => openAuth('sign-up')}
-              className={cn(
-                'hidden h-11 min-h-11 rounded-[var(--radius)] border border-transparent px-3 text-sm font-medium tracking-[0.01em] text-muted-foreground md:inline-flex',
-                'hover:border-border hover:bg-white/60 hover:text-foreground',
-              )}
-            >
-              Sign up
-            </Button>
+            {!session?.user ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => openAuth('sign-up')}
+                className={cn(
+                  'hidden h-11 min-h-11 rounded-[var(--radius)] border border-transparent px-3 text-sm font-medium tracking-[0.01em] text-muted-foreground md:inline-flex',
+                  'hover:border-border hover:bg-white/60 hover:text-foreground',
+                )}
+              >
+                Sign up
+              </Button>
+            ) : null}
             <Link
               href="/cart"
               aria-label={cartLabel}
@@ -293,6 +297,7 @@ export function SiteHeader({ cartCount = 2 }: SiteHeaderProps) {
             >
               {open ? <X {...iconProps} size={22} /> : <Menu {...iconProps} size={22} />}
             </button>
+            {session?.user ? <UserAvatarMenu user={session.user} /> : null}
           </div>
         </div>
 
@@ -471,12 +476,55 @@ export function SiteHeader({ cartCount = 2 }: SiteHeaderProps) {
             Bulk orders
           </Link>
           <div className="my-4 h-px bg-border" />
-          <button type="button" className={cn(mobileNavLinkClass, 'w-full text-left')} onClick={() => openAuth('sign-up')}>
-            Sign up
-          </button>
-          <button type="button" className={cn(mobileNavLinkClass, 'w-full text-left')} onClick={() => openAuth('sign-in')}>
-            Sign in
-          </button>
+          {session?.user ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3 rounded-[var(--radius)] px-4 py-3">
+                <UserAvatar user={session.user} size="default" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {session.user.name?.trim() || session.user.email}
+                  </p>
+                  {session.user.email ? (
+                    <p className="truncate text-xs text-muted-foreground">{session.user.email}</p>
+                  ) : null}
+                </div>
+              </div>
+              <Link
+                href={WEB_ACCOUNT_CREDITS as Route}
+                onClick={closeMenu}
+                className={mobileNavLinkClass}
+              >
+                Credits
+              </Link>
+              <button
+                type="button"
+                className={cn(mobileNavLinkClass, 'w-full text-left text-destructive')}
+                onClick={() => {
+                  void authClient.signOut()
+                  closeMenu()
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={cn(mobileNavLinkClass, 'w-full text-left')}
+                onClick={() => openAuth('sign-up')}
+              >
+                Sign up
+              </button>
+              <button
+                type="button"
+                className={cn(mobileNavLinkClass, 'w-full text-left')}
+                onClick={() => openAuth('sign-in')}
+              >
+                Sign in
+              </button>
+            </>
+          )}
           <Link href="/catalog" onClick={closeMenu} className={cn(ctaClass, 'mt-2')}>
             Start customizing
           </Link>

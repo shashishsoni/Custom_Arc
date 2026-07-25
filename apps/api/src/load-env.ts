@@ -12,3 +12,9 @@ const envFile = ['.env', '.env.example']
   .map((name) => resolve(root, name))
   .find((path) => existsSync(path))
 if (envFile) config({ path: envFile })
+
+// Bun's bundled CA store can fail TLS on Windows/macOS (corporate AV, system roots).
+// Prefer the OS trust store for outbound HTTPS (Cloudflare AI, fal, R2, Neon).
+if (process.env.NODE_USE_SYSTEM_CA == null) {
+  process.env.NODE_USE_SYSTEM_CA = '1'
+}
