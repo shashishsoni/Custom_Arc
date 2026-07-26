@@ -1,11 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import type { Blank, DesignDocument } from '@customarc/shared'
+import type { DesignDocument } from '@customarc/shared'
 import { generationResultSchema } from '@customarc/shared'
 import { API_AI_GENERATE, apiUrl } from '@customarc/shared/constants'
 import { authClient } from '@/lib/auth-client'
-import { AuthModal } from '@/modules/auth-modal'
 import { publishCreditsBalance } from '@/modules/credits'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,11 +13,12 @@ import { cn } from '@/lib/utils'
 import { makeAiImageLayer } from '../../design/design-doc'
 
 type Props = {
-  blank: Blank
   doc: DesignDocument
   designId: string | null
   onDocChange: (doc: DesignDocument) => void
   onSelectLayer: (id: string | null) => void
+  /** Parent ToolsPanel owns the shared AuthModal. */
+  onRequireAuth: () => void
 }
 
 const label = 'mb-2 text-[0.625rem] font-bold tracking-[0.14em] text-fg-muted uppercase'
@@ -26,14 +26,18 @@ const panel = 'rounded border border-border bg-card p-3'
 const control = 'min-h-10 rounded text-sm'
 
 /** Issue 12 — prompt → FLUX texture wrapped onto the blank. */
-export function AiGeneratePanel({ doc, designId, onDocChange, onSelectLayer }: Props) {
+export function AiGeneratePanel({
+  doc,
+  designId,
+  onDocChange,
+  onSelectLayer,
+  onRequireAuth,
+}: Props) {
   const { data: session } = authClient.useSession()
   const [prompt, setPrompt] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
-  const [authOpen, setAuthOpen] = useState(false)
-  const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in')
 
   const onGenerate = async () => {
     setError(null)
@@ -44,7 +48,7 @@ export function AiGeneratePanel({ doc, designId, onDocChange, onSelectLayer }: P
       return
     }
     if (!session?.user) {
-      setAuthOpen(true)
+      onRequireAuth()
       return
     }
     if (!designId) {
@@ -66,7 +70,7 @@ export function AiGeneratePanel({ doc, designId, onDocChange, onSelectLayer }: P
         error?: string
       } | null
       if (res.status === 401) {
-        setAuthOpen(true)
+        onRequireAuth()
         return
       }
       if (!res.ok || !body?.success || body.data === undefined) {
@@ -117,12 +121,6 @@ export function AiGeneratePanel({ doc, designId, onDocChange, onSelectLayer }: P
       <p className="mt-2 text-[0.6875rem] leading-snug text-fg-muted">
         Uses 1 credit · moderated before & after · save design first
       </p>
-      <AuthModal
-        open={authOpen}
-        mode={authMode}
-        onClose={() => setAuthOpen(false)}
-        onModeChange={setAuthMode}
-      />
     </section>
   )
 }

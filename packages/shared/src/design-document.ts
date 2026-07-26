@@ -1,4 +1,9 @@
 import { z } from 'zod'
+import {
+  bodyFinishChoiceSchema,
+  DEFAULT_BODY_FINISH,
+  type BodyFinishChoice,
+} from './body-finish'
 
 /**
  * Design document — the single source of truth for a customization.
@@ -65,6 +70,8 @@ export const designDocumentSchema = z.object({
   template: templateSizeSchema,
   background: z.object({ color: colorHexSchema }),
   layers: z.array(layerSchema).max(16),
+  /** Mug body PBR finish; omitted on old docs → ceramic. Ignored by print PNG. */
+  bodyFinish: bodyFinishChoiceSchema.default(DEFAULT_BODY_FINISH),
 })
 export type DesignDocument = z.infer<typeof designDocumentSchema>
 
@@ -80,5 +87,8 @@ export function createEmptyDesign(blankSlug: string, widthMm: number, heightMm: 
     template: { widthMm, heightMm },
     background: { color: '#ffffff' },
     layers: [],
+    bodyFinish: { ...DEFAULT_BODY_FINISH },
   }
 }
+
+export type { BodyFinishChoice }

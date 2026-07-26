@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
     "./design-document": "./src/design-document.ts",
+    "./body-finish": "./src/body-finish.ts",
     "./blank": "./src/blank.ts",
     "./credits": "./src/credits.ts",
     "./api": "./src/api.ts",

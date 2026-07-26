@@ -99,7 +99,15 @@ export function CustomizerScene({
       />
       <Suspense fallback={<Loader />}>
         <Lights />
-        <Environment preset="studio" environmentIntensity={0.3} />
+        <Environment
+          preset="studio"
+          environmentIntensity={
+            blank.category === 'mug' &&
+            (doc.bodyFinish?.id === 'glass' || doc.bodyFinish?.id === 'metal')
+              ? 1
+              : 0.45
+          }
+        />
         <group position={pose.position} scale={pose.scale} rotation={pose.rotation}>
           <BlankModel
             blank={blank}

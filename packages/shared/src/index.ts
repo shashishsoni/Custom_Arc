@@ -1,4 +1,5 @@
 export * from './design-document'
+export * from './body-finish'
 export * from './blank'
 export * from './credits'
 export * from './api'

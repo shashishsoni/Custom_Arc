@@ -1,4 +1,12 @@
-import type { Blank, DesignDocument, ImageLayer, Layer, LayerTransform, TextLayer } from '@customarc/shared'
+import type {
+  Blank,
+  BodyFinishId,
+  DesignDocument,
+  ImageLayer,
+  Layer,
+  LayerTransform,
+  TextLayer,
+} from '@customarc/shared'
 import { createEmptyDesign } from '@customarc/shared'
 
 export function emptyDocForBlank(blank: Blank): DesignDocument {
@@ -85,6 +93,10 @@ export function makeTextLayer(
       opacity: 1,
     },
   }
+}
+
+export function setBodyFinish(doc: DesignDocument, id: BodyFinishId): DesignDocument {
+  return { ...doc, bodyFinish: { id } }
 }
 
 export function updateLayer(

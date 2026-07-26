@@ -68,6 +68,10 @@ export const app = new Elysia()
       set.status = 400
       return err('Validation failed', error instanceof Error ? error.message : String(error))
     }
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      set.status = 401
+      return err('Unauthorized')
+    }
     logger.error('unhandled error', error)
     set.status = 500
     return err(error instanceof Error ? error.message : 'Internal server error')

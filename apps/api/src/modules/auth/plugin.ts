@@ -5,9 +5,12 @@ import { auth } from './instance.ts'
 /** Session guard for protected modules. Compose with `.use(withAuth)`. */
 export const withAuth = new Elysia({ name: 'with-auth' }).derive(
   { as: 'scoped' },
-  async ({ request }) => {
+  async ({ request, set }) => {
     const session = await auth.api.getSession({ headers: request.headers })
-    if (!session) throw unauthorized()
+    if (!session) {
+      set.status = 401
+      throw unauthorized()
+    }
     return { user: session.user, session: session.session }
   },
 )

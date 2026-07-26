@@ -4,12 +4,22 @@ import { useRef, useState } from 'react'
 import type { Blank, DesignDocument, Layer, UploadResult } from '@customarc/shared'
 import { uploadResultSchema } from '@customarc/shared'
 import { API_UPLOADS, apiUrl } from '@customarc/shared/constants'
+import { authClient } from '@/lib/auth-client'
+import { AuthModal } from '@/modules/auth-modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { makeImageLayer, makeTextLayer, patchTransform, updateLayer } from '../../design/design-doc'
 import { AiGeneratePanel } from './ai-generate-panel'
+import { BodyFinishPanel } from './body-finish-panel'
+
+class AuthRequiredError extends Error {
+  constructor() {
+    super('Sign in required')
+    this.name = 'AuthRequiredError'
+  }
+}
 
 async function uploadDesignImage(
   file: File,
@@ -26,37 +36,18 @@ async function uploadDesignImage(
     credentials: 'include',
   })
 
-  if (res.ok) {
-    const body = (await res.json()) as { success: boolean; data?: unknown; error?: string }
-    if (!body.success || body.data === undefined) throw new Error(body.error ?? 'Upload failed')
-    return uploadResultSchema.parse(body.data)
-  }
+  if (res.status === 401) throw new AuthRequiredError()
 
-  if (res.status === 401) {
-    const url = URL.createObjectURL(file)
-    try {
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const el = new Image()
-        el.onload = () => resolve(el)
-        el.onerror = () => reject(new Error('Could not read image'))
-        el.src = url
-      })
-      return {
-        id: `local-${crypto.randomUUID()}`,
-        previewUrl: url,
-        mimeType: file.type || 'image/jpeg',
-        widthPx: img.naturalWidth,
-        heightPx: img.naturalHeight,
-        sizeBytes: file.size,
-      }
-    } catch (e) {
-      URL.revokeObjectURL(url)
-      throw e
-    }
-  }
+  const body = (await res.json().catch(() => null)) as {
+    success?: boolean
+    data?: unknown
+    error?: string
+  } | null
 
-  const body = (await res.json().catch(() => null)) as { error?: string } | null
-  throw new Error(body?.error ?? `Upload failed (${res.status})`)
+  if (!res.ok || !body?.success || body.data === undefined) {
+    throw new Error(body?.error ?? `Upload failed (${res.status})`)
+  }
+  return uploadResultSchema.parse(body.data)
 }
 
 type Props = {
@@ -81,15 +72,26 @@ export function ToolsPanel({
   onDocChange,
   onSelectLayer,
 }: Props) {
+  const { data: session } = authClient.useSession()
   const fileRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('CustomArc')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in')
 
   const selected = doc.layers.find((l) => l.id === selectedLayerId) ?? null
 
+  const requireAuth = () => {
+    if (session?.user) return true
+    setAuthMode('sign-in')
+    setAuthOpen(true)
+    return false
+  }
+
   const addImage = async (file: File | undefined) => {
     if (!file) return
+    if (!requireAuth()) return
     setBusy(true)
     setError(null)
     try {
@@ -98,9 +100,14 @@ export function ToolsPanel({
       onDocChange({ ...doc, layers: [...doc.layers, layer] })
       onSelectLayer(layer.id)
     } catch (e) {
+      if (e instanceof AuthRequiredError) {
+        setAuthOpen(true)
+        return
+      }
       setError(e instanceof Error ? e.message : 'Upload failed')
     } finally {
       setBusy(false)
+      if (fileRef.current) fileRef.current.value = ''
     }
   }
 
@@ -152,7 +159,10 @@ export function ToolsPanel({
               variant="outline"
               className={cn(control, 'w-full')}
               disabled={busy}
-              onClick={() => fileRef.current?.click()}
+              onClick={() => {
+                if (!requireAuth()) return
+                fileRef.current?.click()
+              }}
             >
               {busy ? 'Uploading…' : 'Upload image'}
             </Button>
@@ -183,12 +193,19 @@ export function ToolsPanel({
         </p>
       </section>
 
+      {blank.category === 'mug' ? (
+        <BodyFinishPanel doc={doc} onDocChange={onDocChange} />
+      ) : null}
+
       <AiGeneratePanel
-        blank={blank}
         doc={doc}
         designId={designId}
         onDocChange={onDocChange}
         onSelectLayer={onSelectLayer}
+        onRequireAuth={() => {
+          setAuthMode('sign-in')
+          setAuthOpen(true)
+        }}
       />
 
       {doc.layers.length > 0 && (
@@ -263,6 +280,13 @@ export function ToolsPanel({
           </div>
         </section>
       )}
+
+      <AuthModal
+        open={authOpen}
+        mode={authMode}
+        onClose={() => setAuthOpen(false)}
+        onModeChange={setAuthMode}
+      />
     </div>
   )
 }

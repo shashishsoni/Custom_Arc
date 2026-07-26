@@ -49,7 +49,10 @@ export const uploadRoutes = new Elysia({ prefix: API_UPLOADS })
     {
       body: t.Object({
         file: t.File({ type: ['image/jpeg', 'image/png', 'image/webp'], maxSize: '8m' }),
-        category: t.Union([t.Literal('mug'), t.Literal('phone_case')]),
+        category: t.String({
+          pattern: '^(mug|phone_case)$',
+          error: 'category must be mug or phone_case',
+        }),
         productSlug: t.String({ minLength: 1 }),
       }),
     },
